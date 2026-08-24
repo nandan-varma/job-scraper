@@ -35,7 +35,7 @@ export default function HomePage() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
             </span>
-            Streaming live from {PLATFORMS.length} job platforms
+            Synced continuously from {PLATFORMS.length} job platforms
           </div>
 
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-6xl">
@@ -47,14 +47,14 @@ export default function HomePage() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-pretty text-base text-muted-foreground sm:text-lg">
-            Browse thousands of roles pulled straight from the careers pages of
-            the best companies in tech. No sign-ups, no database — the source is
-            the source.
+            Browse thousands of roles synced straight from the careers pages of
+            the best companies in tech. No sign-ups — postings that close get
+            removed automatically, so what you see is what&apos;s actually open.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <Zap className="size-3.5 text-primary" /> Live source data
+              <Zap className="size-3.5 text-primary" /> Synced every ~20 min
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Building2 className="size-3.5 text-primary" />{" "}

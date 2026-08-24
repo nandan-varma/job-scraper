@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BriefcaseBusiness } from "lucide-react";
 import "./globals.css";
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EveryRole — Live jobs from top companies",
   description:
-    "Browse thousands of open roles streamed live from the careers pages of the world's best tech companies. No accounts, no database — just the source.",
+    "Browse thousands of open roles synced continuously from the careers pages of the world's best tech companies. No accounts required.",
 };
 
 export default function RootLayout({
@@ -46,9 +47,12 @@ export default function RootLayout({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="hidden text-xs text-muted-foreground md:inline">
-                  Fetched live from company ATS boards
-                </span>
+                <Link
+                  href="/status"
+                  className="hidden text-xs text-muted-foreground hover:text-foreground md:inline"
+                >
+                  Synced from company ATS boards · Sync status →
+                </Link>
                 <ThemeToggle />
               </div>
             </div>
@@ -57,8 +61,11 @@ export default function RootLayout({
           <footer className="border-t py-8">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 text-center text-xs text-muted-foreground sm:px-6 md:flex-row md:text-left">
               <p>
-                EveryRole · Data streamed live from Ashby, Greenhouse, Lever,
-                Workday, Apple, SmartRecruiters &amp; Roblox — no database.
+                EveryRole · Synced continuously from Ashby, Greenhouse, Lever,
+                Workday, Apple, SmartRecruiters, Roblox &amp; HiringCafe.{" "}
+                <Link href="/status" className="underline hover:text-foreground">
+                  Sync status
+                </Link>
               </p>
               <p>Built with Next.js · Tailwind CSS · shadcn/ui</p>
             </div>
