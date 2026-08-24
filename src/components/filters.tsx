@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   Info,
+  Package,
   Search,
   SlidersHorizontal,
   X,
@@ -19,13 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_FILTERS,
+  WORK_MODES,
+  SALARY_MODES,
+  REGION_MODES,
+  type Filters,
+  type FacetCounts,
+} from "@/lib/filtering";
 import {
   ALL_PROVIDERS,
   PLATFORM_META,
@@ -34,56 +38,30 @@ import {
   type Coverage,
   type PlatformFacet,
 } from "@/lib/platforms";
+import type { StarterPack } from "@/lib/featured";
 import { CompanyPicker } from "./company-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export type WorkModeFilter = "all" | "remote" | "hybrid" | "onsite";
-export type SortKey = "newest" | "company" | "title";
-export type SalaryFilter = "all" | "has" | "none";
-
-export interface Filters {
-  query: string;
-  workMode: WorkModeFilter;
-  sort: SortKey;
-  companies: Set<string>;
-  /** Enabled job-provider platforms (e.g. Greenhouse, Ashby). */
-  providers: Set<string>;
-  departments: Set<string>;
-  salary: SalaryFilter;
-}
-
-export const DEFAULT_FILTERS: Filters = {
-  query: "",
-  workMode: "all",
-  sort: "newest",
-  companies: new Set(),
-  providers: new Set(ALL_PROVIDERS),
-  departments: new Set(),
-  salary: "all",
-};
+export { DEFAULT_FILTERS } from "@/lib/filtering";
+export type { Filters } from "@/lib/filtering";
 
 interface Props {
   filters: Filters;
   onChange: (next: Filters) => void;
   loadedSlugs: Set<string>;
   onToggleCompany: (slug: string) => void;
-  departments: string[];
   platforms: PlatformFacet[];
   coverage: Coverage;
+  facets: FacetCounts;
   resultCount: number;
+  packs: StarterPack[];
+  onLoadPack: (pack: StarterPack) => void;
 }
-
-const WORK_MODES: Array<{ value: WorkModeFilter; label: string }> = [
-  { value: "all", label: "All" },
-  { value: "remote", label: "Remote" },
-  { value: "hybrid", label: "Hybrid" },
-  { value: "onsite", label: "On-site" },
-];
-
-const SALARY_MODES: Array<{ value: SalaryFilter; label: string }> = [
-  { value: "all", label: "Any" },
-  { value: "has", label: "Has salary" },
-  { value: "none", label: "No salary" },
-];
 
 /** Fields shown in the cross-source "what data do they provide" matrix. */
 const MATRIX_FIELDS: Array<{
@@ -97,7 +75,10 @@ const MATRIX_FIELDS: Array<{
 ];
 
 function allProvidersActive(filters: Filters): boolean {
-  return filters.providers.size === ALL_PROVIDERS.length;
+  return (
+    filters.providers.size === ALL_PROVIDERS.length ||
+    ALL_PROVIDERS.every((p) => filters.providers.has(p))
+  );
 }
 
 export function FiltersBar({
@@ -105,10 +86,12 @@ export function FiltersBar({
   onChange,
   loadedSlugs,
   onToggleCompany,
-  departments,
   platforms,
   coverage,
+  facets,
   resultCount,
+  packs,
+  onLoadPack,
 }: Props) {
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -130,20 +113,22 @@ export function FiltersBar({
     patch({ providers: next });
   };
 
-  const clearAdvanced = () => patch({ departments: new Set(), salary: "all" });
+  const clearAdvanced = () =>
+    patch({ departments: new Set(), salary: "all", region: "all" });
 
-  const clearAll = () => {
-    onChange({ ...DEFAULT_FILTERS, query: filters.query });
-  };
+  const clearAll = () => onChange({ ...DEFAULT_FILTERS, query: filters.query });
 
   const advancedActive =
-    filters.departments.size + (filters.salary !== "all" ? 1 : 0);
+    filters.departments.size +
+    (filters.salary !== "all" ? 1 : 0) +
+    (filters.region !== "all" ? 1 : 0);
 
   const activeFilters =
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
     filters.departments.size > 0 ||
-    filters.salary !== "all";
+    filters.salary !== "all" ||
+    filters.region !== "all";
 
   const deptCoverage = coverage.department;
   const salaryCoverage = coverage.salary;
@@ -174,26 +159,42 @@ export function FiltersBar({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Work-mode segmented with live counts */}
           <div className="flex rounded-lg border bg-muted/40 p-0.5">
-            {WORK_MODES.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => patch({ workMode: m.value })}
-                className={cn(
-                  "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                  filters.workMode === m.value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {m.label}
-              </button>
-            ))}
+            {WORK_MODES.map((m) => {
+              const count = facets.workMode[m.value];
+              const active = filters.workMode === m.value;
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => patch({ workMode: m.value })}
+                  className={cn(
+                    "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    active
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {m.label}
+                    <span
+                      className={cn(
+                        "text-[10px] tabular-nums",
+                        active ? "text-muted-foreground" : "opacity-60",
+                      )}
+                    >
+                      {count.toLocaleString()}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
+
           <Select
             value={filters.sort}
-            onValueChange={(v) => patch({ sort: v as SortKey })}
+            onValueChange={(v) => patch({ sort: v as Filters["sort"] })}
           >
             <SelectTrigger
               className="h-9 w-auto gap-1 [&>svg]:size-3.5"
@@ -221,6 +222,30 @@ export function FiltersBar({
           onOpenCompany={(slug) => router.push(`/companies/${slug}`)}
         />
 
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Package className="size-3.5" />
+              Packs
+              <ChevronDown className="size-3 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {packs.map((pack) => (
+              <DropdownMenuItem
+                key={pack.id}
+                onSelect={() => onLoadPack(pack)}
+                className="justify-between gap-4"
+              >
+                {pack.label}
+                <span className="text-xs text-muted-foreground">
+                  {pack.slugs.length}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Popover open={moreOpen} onOpenChange={setMoreOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 gap-1.5">
@@ -247,7 +272,7 @@ export function FiltersBar({
                 </button>
               )}
             </div>
-            <div className="max-h-[26rem] overflow-y-auto p-2">
+            <div className="p-2">
               <FilterSection label="Department">
                 {platforms.length === 0 ? null : (
                   <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
@@ -256,47 +281,85 @@ export function FiltersBar({
                       : "None of the loaded sources provide departments."}
                   </p>
                 )}
-                {departments.length === 0 ? (
-                  <Muted>
-                    {deptCoverage.available > 0
-                      ? "No department data in the loaded roles."
-                      : "No departments to filter by yet."}
-                  </Muted>
+                {facets.departments.length === 0 ? (
+                  <Muted>No departments in the loaded roles.</Muted>
                 ) : (
-                  <FacetList>
-                    {departments.map((d) => (
-                      <FacetRow
-                        key={d}
-                        checked={filters.departments.has(d)}
-                        onToggle={() => toggleDepartment(d)}
-                        label={d}
-                      />
-                    ))}
-                  </FacetList>
+                  <div className="max-h-48 overflow-y-auto">
+                    <FacetList>
+                      {facets.departments.map((d) => (
+                        <FacetRow
+                          key={d.name}
+                          checked={filters.departments.has(d.name)}
+                          onToggle={() => toggleDepartment(d.name)}
+                          label={d.name}
+                          hint={d.count.toLocaleString()}
+                        />
+                      ))}
+                    </FacetList>
+                  </div>
                 )}
               </FilterSection>
 
               {salaryCoverage.available > 0 && (
                 <FilterSection label="Salary">
                   <div className="flex rounded-lg border bg-muted/40 p-0.5">
-                    {SALARY_MODES.map((m) => (
+                    {SALARY_MODES.map((m) => {
+                      const count = facets.salary[m.value];
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => patch({ salary: m.value })}
+                          className={cn(
+                            "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                            filters.salary === m.value
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <span className="inline-flex flex-col items-center leading-tight">
+                            {m.label}
+                            <span className="text-[10px] tabular-nums opacity-60">
+                              {count.toLocaleString()}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </FilterSection>
+              )}
+
+              <FilterSection label="Region">
+                <div className="flex rounded-lg border bg-muted/40 p-0.5">
+                  {REGION_MODES.map((m) => {
+                    const count = facets.region[m.value];
+                    return (
                       <button
                         key={m.value}
                         type="button"
-                        onClick={() => patch({ salary: m.value })}
+                        onClick={() => patch({ region: m.value })}
                         className={cn(
                           "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                          filters.salary === m.value
+                          filters.region === m.value
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                       >
-                        {m.label}
+                        <span className="inline-flex flex-col items-center leading-tight">
+                          {m.label}
+                          <span className="text-[10px] tabular-nums opacity-60">
+                            {count.toLocaleString()}
+                          </span>
+                        </span>
                       </button>
-                    ))}
-                  </div>
-                </FilterSection>
-              )}
+                    );
+                  })}
+                </div>
+                <p className="mt-1 px-1 text-[11px] leading-snug text-muted-foreground">
+                  Guessed from the role&apos;s location text — not exact.
+                </p>
+              </FilterSection>
             </div>
           </PopoverContent>
         </Popover>
@@ -360,7 +423,7 @@ export function FiltersBar({
         </span>
       </div>
 
-      {/* Row 3: job-provider selector + active chips */}
+      {/* Row 3: job-provider selector with live role counts */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           Sources
@@ -368,6 +431,7 @@ export function FiltersBar({
         {ALL_PROVIDERS.map((p) => {
           const meta = PLATFORM_META[p];
           const active = filters.providers.has(p);
+          const count = facets.providers[p] ?? 0;
           return (
             <button
               key={p}
@@ -388,6 +452,9 @@ export function FiltersBar({
                 )}
               />
               {meta?.label ?? p}
+              <span className="tabular-nums opacity-70">
+                {count.toLocaleString()}
+              </span>
             </button>
           );
         })}
@@ -421,10 +488,15 @@ export function FiltersBar({
             </Chip>
           ))}
           {filters.salary === "has" && (
-            <Chip onClear={() => patch({ salary: "all" })}>Has salary</Chip>
+            <Chip onClear={() => patch({ salary: "all" })}>Has pay</Chip>
           )}
           {filters.salary === "none" && (
-            <Chip onClear={() => patch({ salary: "all" })}>No salary</Chip>
+            <Chip onClear={() => patch({ salary: "all" })}>No pay</Chip>
+          )}
+          {filters.region !== "all" && (
+            <Chip onClear={() => patch({ region: "all" })}>
+              {filters.region === "us" ? "US roles" : "International"}
+            </Chip>
           )}
           {activeFilters && (
             <button
@@ -491,7 +563,7 @@ function FacetRow({
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {hint && (
-        <span className="shrink-0 text-[10px] text-muted-foreground">
+        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
           {hint}
         </span>
       )}
@@ -547,3 +619,9 @@ function Chip({
     </button>
   );
 }
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";

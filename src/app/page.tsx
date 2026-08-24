@@ -1,16 +1,9 @@
 import { ArrowRight, Building2, Globe2, Zap } from "lucide-react";
 import { JobBrowser } from "@/components/job-browser";
 import { SITES } from "@/lib/sites";
+import { ALL_PROVIDERS, PLATFORM_META } from "@/lib/platforms";
 
-const PLATFORMS = [
-  "Ashby",
-  "Greenhouse",
-  "Lever",
-  "Workday",
-  "Apple",
-  "SmartRecruiters",
-  "Roblox",
-];
+const PLATFORMS = ALL_PROVIDERS.map((p) => PLATFORM_META[p]?.label ?? p);
 
 export default function HomePage() {
   return (

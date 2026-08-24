@@ -11,17 +11,20 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Job } from "@/lib/types";
-import { FEATURED } from "@/lib/featured";
+import { FEATURED, STARTER_PACKS, type StarterPack } from "@/lib/featured";
 import { fetchJobs, fetchJobDetail } from "@/lib/api-client";
-import { normalizeQuery, dedupeJobs } from "@/lib/format";
+import { dedupeJobs, normalizeQuery } from "@/lib/format";
 import { computeCoverage, platformFacets } from "@/lib/platforms";
+import { jobMatches, sortJobs, facetCounts } from "@/lib/filtering";
+import { isLikelyUSVisitor } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { JobCard } from "./job-card";
 import { JobDetail } from "./job-detail";
 import { FiltersBar, DEFAULT_FILTERS, type Filters } from "./filters";
+import { CompanyPicker } from "./company-picker";
 import { CommandMenu } from "./command-menu";
-import { EmptyState, JobListSkeleton } from "./states";
+import { Onboarding, EmptyState, JobListSkeleton } from "./states";
 
 interface Props {
   initialJobs: Job[];
@@ -29,10 +32,10 @@ interface Props {
 }
 
 const PAGE_SIZE = 20;
-/** How many extra filtered jobs are appended per "load more" / scroll batch. */
 const LOAD_MORE_STEP = 40;
+/** Height of the sticky site header (h-14), used to offset the sticky detail pane. */
+const HEADER_HEIGHT = 56;
 
-/** Debounce any value; state update happens via timeout (async, lint-safe). */
 function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -52,15 +55,36 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
   const [loadingSlugs, setLoadingSlugs] = useState<Set<string>>(new Set());
   const [commandOpen, setCommandOpen] = useState(false);
 
-  // Full details (with description) fetched on demand, cached by job id.
   const [detailsCache, setDetailsCache] = useState<Record<string, Job>>({});
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Pagination for the master list so huge result sets never blow up the DOM.
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-
-  // Debounced search — the expensive filter/sort runs only after typing stops.
   const debouncedQuery = useDebouncedValue(filters.query, 250);
+
+  // Measure the toolbar's real height (it wraps to 2-3 lines once companies
+  // and filter chips pile up) so the sticky detail pane never drifts out of
+  // sync with a fixed offset guess.
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const [toolbarHeight, setToolbarHeight] = useState(0);
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setToolbarHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Nudge the Region filter toward "US" for visitors in US timezones. Client-only
+  // (timezone isn't known at SSR time) and reversible via the Region filter chip.
+  const appliedRegionDefault = useRef(false);
+  useEffect(() => {
+    if (!appliedRegionDefault.current && isLikelyUSVisitor()) {
+      appliedRegionDefault.current = true;
+      setFilters((prev) => ({ ...prev, region: "us" }));
+    }
+  }, []);
 
   const loadSites = useCallback(
     async (
@@ -119,16 +143,24 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     [loadedSlugs],
   );
 
-  // Bootstrap: fetch the curated featured set on first mount if none supplied.
+  // Bootstrap: fetch the curated featured set on first mount if none supplied,
+  // so a first-time visitor sees real roles immediately instead of an empty
+  // "build your feed" screen.
   const bootstrapped = useRef(false);
   useEffect(() => {
     if (!bootstrapped.current && initialJobs.length === 0) {
       bootstrapped.current = true;
+      setFilters((prev) => ({
+        ...prev,
+        companies: new Set([...prev.companies, ...FEATURED]),
+      }));
       void loadSites(FEATURED, false, 4);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Selection-driven: adding a company also marks it selected (so the filter
+  // state and the loaded feed stay in sync) and fetches its roles on demand.
   const toggleCompany = useCallback(
     (slug: string) => {
       setFilters((prev) => {
@@ -142,6 +174,25 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     [loadSites, loadedSlugs],
   );
 
+  const selectCompanies = useCallback(
+    (slugs: string[]) => {
+      setFilters((prev) => ({
+        ...prev,
+        companies: new Set([...prev.companies, ...slugs]),
+      }));
+      void loadSites(slugs);
+    },
+    [loadSites],
+  );
+
+  const loadPack = useCallback(
+    (pack: StarterPack) => {
+      void selectCompanies(pack.slugs);
+      toast.success(`Added ${pack.label} (${pack.slugs.length} companies)`);
+    },
+    [selectCompanies],
+  );
+
   const refresh = useCallback(() => {
     const slugs = [...loadedSlugs];
     setJobs([]);
@@ -151,69 +202,29 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     void loadSites(slugs, false, 0, true);
   }, [loadedSlugs, loadSites]);
 
-  const resetFilters = useCallback(() => {
-    setFilters(DEFAULT_FILTERS);
-  }, []);
+  const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), []);
 
-  const filtered = useMemo(() => {
-    const q = normalizeQuery(debouncedQuery);
-    let list = jobs.filter((j) => {
-      if (filters.workMode !== "all" && j.work_mode !== filters.workMode)
-        return false;
-      if (filters.companies.size && !filters.companies.has(j.site))
-        return false;
-      if (filters.providers.size && !filters.providers.has(j.platform))
-        return false;
-      if (
-        filters.departments.size &&
-        !filters.departments.has(j.department ?? "")
-      )
-        return false;
-      if (filters.salary === "has" && !j.compensation) return false;
-      if (filters.salary === "none" && j.compensation) return false;
-      if (!q) return true;
-      return (
-        normalizeQuery(j.title).includes(q) ||
-        normalizeQuery(j.company).includes(q) ||
-        normalizeQuery(j.location ?? "").includes(q) ||
-        normalizeQuery(j.department ?? "").includes(q)
-      );
-    });
-    switch (filters.sort) {
-      case "newest":
-        list = [...list].sort((a, b) =>
-          (b.posted_date ?? "").localeCompare(a.posted_date ?? ""),
-        );
-        break;
-      case "company":
-        list = [...list].sort((a, b) => a.company.localeCompare(b.company));
-        break;
-      case "title":
-        list = [...list].sort((a, b) => a.title.localeCompare(b.title));
-        break;
-    }
-    return list;
-  }, [jobs, filters, debouncedQuery]);
+  const q = normalizeQuery(debouncedQuery);
 
-  const departments = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const j of jobs) {
-      const d = j.department;
-      if (!d) continue;
-      counts.set(d, (counts.get(d) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 40)
-      .map(([d]) => d);
-  }, [jobs]);
+  const filtered = useMemo(
+    () =>
+      sortJobs(
+        jobs.filter((j) => jobMatches(j, filters, q)),
+        filters.sort,
+      ),
+    [jobs, filters, q],
+  );
 
-  // Live data availability — drives adaptive filters and the coverage explainer.
+  // Faceted counts power every filter option (work-mode, salary, sources, dept).
+  const facets = useMemo(
+    () => facetCounts(jobs, filters, q),
+    [jobs, filters, q],
+  );
+
   const coverage = useMemo(() => computeCoverage(jobs), [jobs]);
   const platforms = useMemo(() => platformFacets(jobs), [jobs]);
 
-  // Paginate: reset the window whenever the query/filters change.
-  const paginationKey = `${debouncedQuery}|${filters.workMode}|${filters.sort}|${filters.companies.size}|${filters.departments.size}|${filters.providers.size}|${filters.salary}`;
+  const paginationKey = `${q}|${filters.workMode}|${filters.sort}|${filters.companies.size}|${filters.departments.size}|${filters.providers.size}|${filters.salary}|${filters.region}`;
   const [lastPaginationKey, setLastPaginationKey] = useState(paginationKey);
   if (paginationKey !== lastPaginationKey) {
     setLastPaginationKey(paginationKey);
@@ -225,7 +236,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     [filtered, visibleCount],
   );
 
-  // Infinite scroll: extend the window as the user nears the bottom.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = sentinelRef.current;
@@ -248,8 +258,7 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
 
   const selected = useMemo(() => {
     const base = jobs.find((j) => j.id === selectedId) ?? null;
-    if (!base) return null;
-    return detailsCache[base.id] ?? base;
+    return base ? (detailsCache[base.id] ?? base) : null;
   }, [jobs, selectedId, detailsCache]);
 
   const handleSelect = useCallback(
@@ -259,9 +268,7 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
         setDetailLoading(true);
         fetchJobDetail(job.site, job.source_id)
           .then((full) => {
-            if (full) {
-              setDetailsCache((prev) => ({ ...prev, [full.id]: full }));
-            }
+            if (full) setDetailsCache((prev) => ({ ...prev, [full.id]: full }));
           })
           .catch(() => {})
           .finally(() => setDetailLoading(false));
@@ -278,9 +285,12 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
     filters.departments.size > 0 ||
-    filters.salary !== "all";
+    filters.salary !== "all" ||
+    filters.region !== "all";
 
   const showMore = visibleCount < filtered.length;
+  const showOnboarding = jobs.length === 0 && !loading;
+  const activeCompanies = loadedSlugs.size;
 
   return (
     <div className="relative">
@@ -292,7 +302,10 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
       />
 
       {/* Toolbar */}
-      <div className="sticky top-14 z-30 border-b bg-background/80 backdrop-blur-md">
+      <div
+        ref={toolbarRef}
+        className="sticky top-14 z-30 border-b bg-background/80 backdrop-blur-md"
+      >
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm">
@@ -302,7 +315,7 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
               </span>
               <span className="text-muted-foreground">open roles</span>
               <span className="hidden text-muted-foreground sm:inline">
-                · {loadedSlugs.size} companies
+                · {activeCompanies} companies · {filters.providers.size} sources
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -310,6 +323,7 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
                 variant="outline"
                 size="sm"
                 onClick={() => setCommandOpen(true)}
+                disabled={showOnboarding}
                 className="hidden gap-2 text-muted-foreground md:inline-flex"
               >
                 <ArrowDownUp className="size-3.5" />
@@ -332,26 +346,43 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
               </Button>
             </div>
           </div>
-          <div className="mt-3">
-            <FiltersBar
-              filters={filters}
-              onChange={setFilters}
-              loadedSlugs={loadedSlugs}
-              onToggleCompany={toggleCompany}
-              departments={departments}
-              platforms={platforms}
-              coverage={coverage}
-              resultCount={filtered.length}
-            />
-          </div>
+          {!showOnboarding && (
+            <div className="mt-3">
+              <FiltersBar
+                filters={filters}
+                onChange={setFilters}
+                loadedSlugs={loadedSlugs}
+                onToggleCompany={toggleCompany}
+                platforms={platforms}
+                coverage={coverage}
+                facets={facets}
+                resultCount={filtered.length}
+                packs={STARTER_PACKS}
+                onLoadPack={loadPack}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div
+        className={`mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 ${
+          showOnboarding ? "" : "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+        }`}
+      >
         {/* Master list */}
         <div className="min-w-0">
-          {loading && jobs.length === 0 ? (
+          {showOnboarding ? (
+            <Onboarding packs={STARTER_PACKS} onLoadPack={loadPack}>
+              <CompanyPicker
+                selected={filters.companies}
+                loaded={loadedSlugs}
+                providers={[...filters.providers]}
+                onToggle={toggleCompany}
+              />
+            </Onboarding>
+          ) : loading && jobs.length === 0 ? (
             <JobListSkeleton count={8} />
           ) : filtered.length === 0 ? (
             <EmptyState hasFilters={hasFilters} onReset={resetFilters} />
@@ -367,7 +398,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
                 />
               ))}
 
-              {/* Pager */}
               {filtered.length > PAGE_SIZE && (
                 <div className="pt-2">
                   <p className="mb-2 text-center text-xs text-muted-foreground">
@@ -400,34 +430,53 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
         </div>
 
         {/* Detail pane (desktop) */}
-        <div className="sticky top-36 hidden h-[calc(100dvh-11rem)] lg:block">
-          <div className="relative h-full overflow-hidden rounded-2xl border bg-card">
-            {detailLoading && !selected && (
-              <div className="absolute inset-0 z-10 grid place-items-center bg-card/60 backdrop-blur-sm">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            {selected ? (
-              <JobDetail job={selected} loading={detailLoading} />
-            ) : (
-              <DetailPlaceholder count={filtered.length} />
-            )}
+        {!showOnboarding && (
+          <div
+            className="sticky hidden lg:block"
+            style={{
+              top: HEADER_HEIGHT + toolbarHeight,
+              height: `calc(100dvh - ${HEADER_HEIGHT + toolbarHeight}px)`,
+            }}
+          >
+            <div className="relative h-full overflow-hidden rounded-2xl border bg-card">
+              {detailLoading && !selected && (
+                <div className="absolute inset-0 z-10 grid place-items-center bg-card/60 backdrop-blur-sm">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {selected ? (
+                <JobDetail job={selected} loading={detailLoading} />
+              ) : (
+                <DetailPlaceholder count={filtered.length} />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile detail sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="right" className="w-full p-0 sm:max-w-md">
-          {selected && <JobDetail job={selected} loading={detailLoading} />}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            className="absolute top-4 right-4 z-10 rounded-full bg-background/80 p-1.5 text-muted-foreground backdrop-blur hover:text-foreground"
-            aria-label="Close"
-          >
-            <X className="size-4" />
-          </button>
+        <SheetContent
+          side="right"
+          className="flex w-full flex-col p-0 sm:max-w-md"
+          showCloseButton={false}
+        >
+          <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
+            <span className="text-sm font-medium text-muted-foreground">
+              Job details
+            </span>
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">
+            {selected && <JobDetail job={selected} loading={detailLoading} />}
+          </div>
         </SheetContent>
       </Sheet>
     </div>
