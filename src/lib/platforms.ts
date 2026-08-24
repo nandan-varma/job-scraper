@@ -137,49 +137,6 @@ export function platformMeta(platform: string): PlatformMeta | undefined {
 /** Every supported job-provider platform, in display order. */
 export const ALL_PROVIDERS = Object.keys(PLATFORM_META);
 
-/** A single field's availability over a loaded job set. */
-export interface FieldCoverage {
-  available: number;
-  total: number;
-  /** 0..1 */
-  pct: number;
-}
-
-export type Coverage = Record<ProvideKey, FieldCoverage>;
-
-function cov(available: number, total: number): FieldCoverage {
-  return { available, total, pct: total ? available / total : 0 };
-}
-
-/** Observable field coverage across the currently loaded job set. */
-export function computeCoverage(jobs: Job[]): Coverage {
-  let location = 0,
-    department = 0,
-    work_mode = 0,
-    salary = 0,
-    posted = 0,
-    description = 0;
-  for (const j of jobs) {
-    if (j.location) location++;
-    if (j.department) department++;
-    if (j.work_mode) work_mode++;
-    if (j.compensation) salary++;
-    if (j.posted_date) posted++;
-    // List payloads carry compact jobs: full desc is fetched on demand, but
-    // `hasDescription` tells us the source *does* provide one.
-    if (j.description || j.hasDescription) description++;
-  }
-  const total = jobs.length || 1;
-  return {
-    location: cov(location, total),
-    department: cov(department, total),
-    work_mode: cov(work_mode, total),
-    salary: cov(salary, total),
-    posted: cov(posted, total),
-    description: cov(description, total),
-  };
-}
-
 /** Distinct platforms present in the loaded set, sorted by role count desc. */
 export interface PlatformFacet {
   key: string;
@@ -201,15 +158,3 @@ export function platformFacets(jobs: Job[]): PlatformFacet[] {
     }));
 }
 
-/** How many distinct platforms in `platforms` advertise this field. */
-export function platformsProviding(
-  platforms: PlatformFacet[],
-  field: ProvideKey,
-): number {
-  return platforms.filter((p) => PLATFORM_META[p.key]?.provide[field]).length;
-}
-
-/** Percent (0-100) of roles that carry this field. */
-export function pct(c: FieldCoverage): number {
-  return Math.round(c.pct * 100);
-}

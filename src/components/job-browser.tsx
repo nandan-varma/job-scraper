@@ -14,8 +14,13 @@ import type { Job } from "@/lib/types";
 import { FEATURED, STARTER_PACKS, type StarterPack } from "@/lib/featured";
 import { fetchJobs, fetchJobDetail } from "@/lib/api-client";
 import { dedupeJobs, normalizeQuery } from "@/lib/format";
-import { computeCoverage, platformFacets } from "@/lib/platforms";
-import { jobMatches, sortJobs, facetCounts } from "@/lib/filtering";
+import { ALL_PROVIDERS, PLATFORM_META, platformFacets } from "@/lib/platforms";
+import {
+  jobMatches,
+  sortJobs,
+  facetCounts,
+  providerTabCounts,
+} from "@/lib/filtering";
 import { isLikelyUSVisitor } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -221,8 +226,11 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     [jobs, filters, q],
   );
 
-  const coverage = useMemo(() => computeCoverage(jobs), [jobs]);
   const platforms = useMemo(() => platformFacets(jobs), [jobs]);
+  const tabCounts = useMemo(
+    () => providerTabCounts(jobs, filters, q),
+    [jobs, filters, q],
+  );
 
   const paginationKey = `${q}|${filters.workMode}|${filters.sort}|${filters.companies.size}|${filters.departments.size}|${filters.providers.size}|${filters.salary}|${filters.region}`;
   const [lastPaginationKey, setLastPaginationKey] = useState(paginationKey);
@@ -315,7 +323,10 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
               </span>
               <span className="text-muted-foreground">open roles</span>
               <span className="hidden text-muted-foreground sm:inline">
-                · {activeCompanies} companies · {filters.providers.size} sources
+                · {activeCompanies} companies ·{" "}
+                {filters.providers.size === ALL_PROVIDERS.length
+                  ? "all sources"
+                  : `${PLATFORM_META[[...filters.providers][0]]?.label ?? [...filters.providers][0]} only`}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -354,7 +365,7 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
                 loadedSlugs={loadedSlugs}
                 onToggleCompany={toggleCompany}
                 platforms={platforms}
-                coverage={coverage}
+                tabCounts={tabCounts}
                 facets={facets}
                 resultCount={filtered.length}
                 packs={STARTER_PACKS}

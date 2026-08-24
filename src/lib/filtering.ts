@@ -171,3 +171,24 @@ export function facetCounts(jobs: Job[], f: Filters, q?: string): FacetCounts {
 
   return { workMode: wm, salary: sal, region, providers, departments };
 }
+
+/**
+ * Per-platform job counts under only the filters that survive a source-tab
+ * switch (companies, region, query) — sizes the tab strip without counting
+ * provider-specific filters (work mode/salary/department) that get reset
+ * when the tab changes.
+ */
+export function providerTabCounts(
+  jobs: Job[],
+  f: Filters,
+  q?: string,
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const j of jobs) {
+    if (f.companies.size && !f.companies.has(j.site)) continue;
+    if (!regionMatches(j, f.region)) continue;
+    if (q && !qMatches(j, q)) continue;
+    counts[j.platform] = (counts[j.platform] ?? 0) + 1;
+  }
+  return counts;
+}
