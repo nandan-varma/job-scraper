@@ -7,7 +7,7 @@ Look and feel is modeled after the best modern careers sites: a glass hero, a Li
 ## Features
 
 - **Live source data** — fetches directly from public ATS APIs on request (in-process 15-min cache, no DB).
-- **7 platforms**, 131 companies registered:
+- **7 platforms**, 8,149 companies registered:
   Ashby · Greenhouse · Lever · Workday · Apple · SmartRecruiters · Roblox (+ HiringCafe HTML scraping).
 - **Master–detail UX** — job list on the left, full description/apply pane on the right (desktop), swipe sheet on mobile.
 - **Powerful filters** — keyword search, work-mode (Remote / Hybrid / On-site), company picker (load-on-demand), department, sort (newest / company / title), active-filter chips.
@@ -41,7 +41,7 @@ src/
     page.tsx            # hero + <JobBrowser>
     layout.tsx          # fonts, providers, header/footer
     api/jobs/route.ts   # GET /api/jobs?featured=1 | ?sites=a,b | ?all=1 | &fresh=1
-    api/sites/route.ts  # GET /api/sites — the 131-company registry
+    api/sites/route.ts  # GET /api/sites — the 8,100+ company registry
   lib/
     sites.ts            # generated registry (slug / name / platform / config)
     fetchers.ts         # per-platform scrapers (numbered port of ref fetch.py)

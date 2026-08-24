@@ -1,5 +1,6 @@
 import { ArrowRight, Building2, Globe2, Zap } from "lucide-react";
 import { JobBrowser } from "@/components/job-browser";
+import { SITES } from "@/lib/sites";
 
 const PLATFORMS = [
   "Ashby",
@@ -63,7 +64,8 @@ export default function HomePage() {
               <Zap className="size-3.5 text-primary" /> Live source data
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Building2 className="size-3.5 text-primary" /> 130+ companies
+              <Building2 className="size-3.5 text-primary" />{" "}
+              {SITES.length.toLocaleString()} companies
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Globe2 className="size-3.5 text-primary" /> Remote &amp; on-site
