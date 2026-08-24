@@ -1,129 +1,94 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchSites, allSites, compactJobs, siteBySlug } from "@/lib/jobs";
-import { FEATURED } from "@/lib/featured";
+import {
+  browseJobs,
+  browseFacets,
+  browseTabCounts,
+  type BrowseFilters,
+  type SortKey,
+} from "@/lib/db/queries";
+import type { WorkMode } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** 60s fresh, serve stale in background for up to 5 min (edge/CDN friendly). */
-const CACHE_HEADER = "public, s-maxage=60, stale-while-revalidate=300";
+/** 30s fresh, serve stale in background — the sync engine updates the DB on
+ * its own cadence (minutes), so a short edge cache smooths request bursts
+ * without ever serving noticeably stale data. */
+const CACHE_HEADER = "public, s-maxage=30, stale-while-revalidate=120";
 
 /**
- * GET /api/jobs
- *   ?sites=a,b,c   fetch (or serve from cache) specific companies
- *   ?featured=1    fetch a curated starter set
- *   &q=term         server-side text search over title|company|location|department
- *   &platforms=gh,.. restrict to job-provider platform(s)
- *   &page=1&perPage=20  paginate the filtered role set (flat `jobs`)
- *   &fresh=1        bypass the in-process cache
+ * GET /api/jobs — server-driven browse across the ENTIRE synced catalog.
+ * No company selection required: omit `companies` to search/filter/sort
+ * across every open role currently in the DB.
  *
- * Returns `{ jobs, total, page, perPage, totalPages, sites_fetched, sites_failed,
- * errors }`. `results` (per-site) is included when not paginating for backward
- * compat. Descriptions are compacted; the full JD loads on demand via
+ *   ?q=term                 full-text search (title/company/department) + location substring
+ *   &workMode=remote|hybrid|onsite
+ *   &salary=has|none
+ *   &region=us|intl
+ *   &platforms=ashby,lever  restrict to job-provider platform(s)
+ *   &departments=Eng,Sales  restrict to department(s)
+ *   &companies=openai,vercel  optional narrowing filter (was previously required)
+ *   &sort=newest|company|title
+ *   &page=1&perPage=20
+ *   &facets=0               skip the facet/tab-count aggregate queries (for "load more")
+ *
+ * Returns `{ jobs, total, page, perPage, totalPages, facets?, tabCounts? }`.
+ * Descriptions are omitted from list rows; load the full JD on demand via
  * /api/jobs/[slug].
  */
-import type { Job } from "@/lib/types";
-
-function stableSort(jobs: Job[]): Job[] {
-  const idx = new Map<string, number>();
-  jobs.forEach((j, i) => idx.set(j.id, i));
-  return [...jobs].sort(
-    (a, b) =>
-      (b.posted_date ?? "").localeCompare(a.posted_date ?? "") ||
-      (idx.get(a.id) ?? 0) - (idx.get(b.id) ?? 0),
-  );
-}
-
-function matches(j: Job, q: string): boolean {
-  return (
-    j.title.toLowerCase().includes(q) ||
-    j.company.toLowerCase().includes(q) ||
-    (j.location ?? "").toLowerCase().includes(q) ||
-    (j.department ?? "").toLowerCase().includes(q)
-  );
+function csv(v: string | null): string[] {
+  return v
+    ? v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
 }
 
 export async function GET(req: NextRequest) {
-  const params = req.nextUrl.searchParams;
-  const force = params.get("fresh") === "1";
-  const q = (params.get("q") ?? "").toLowerCase().trim();
+  const p = req.nextUrl.searchParams;
+  const page = Math.max(1, Number(p.get("page") ?? 1) || 1);
+  const perPage = Math.min(100, Math.max(1, Number(p.get("perPage") ?? 20) || 20));
+  const sort = ((p.get("sort") as SortKey) || "newest") as SortKey;
+  const wantFacets = p.get("facets") !== "0";
 
-  const platforms = (params.get("platforms") ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const paginated =
-    params.get("page") !== null || params.get("perPage") !== null;
-  const page = Math.max(1, Number(params.get("page") ?? 1) || 1);
-  const perPage = Math.min(
-    100,
-    Math.max(1, Number(params.get("perPage") ?? 20) || 20),
-  );
+  const workMode = (p.get("workMode") as WorkMode) || undefined;
+  const salary = (p.get("salary") as "has" | "none" | null) || undefined;
+  const region = (p.get("region") as "us" | "intl" | null) || undefined;
 
-  let slugs: string[] | null = null;
-  if (params.get("all") === "1") {
-    // Global "load everything" is impractical at registry scale — cap it so the
-    // server isn't hammered; the app now searches companies instead.
-    const maxSites = Math.min(Number(params.get("maxSites") ?? 0) || 0, 300);
-    slugs = allSites().map((s) => s.slug);
-    if (maxSites) slugs = slugs.slice(0, maxSites);
-  } else if (params.get("featured") === "1") {
-    slugs = FEATURED;
-  } else {
-    const raw = params.get("sites");
-    if (raw) {
-      slugs = raw
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
-  }
+  const filters: BrowseFilters = {
+    q: p.get("q")?.trim() || undefined,
+    workMode: workMode && workMode !== null ? workMode : undefined,
+    salary: salary === "has" || salary === "none" ? salary : undefined,
+    region: region === "us" || region === "intl" ? region : undefined,
+    platforms: csv(p.get("platforms")),
+    departments: csv(p.get("departments")),
+    // "sites" kept as an alias so the company page's existing calls
+    // (?sites=slug) keep working against the same underlying filter.
+    companies: csv(p.get("companies") ?? p.get("sites")),
+  };
 
-  if (!slugs || slugs.length === 0) {
-    return NextResponse.json(
-      { error: "Provide ?sites=a,b,c, ?featured=1, or ?all=1" },
-      { status: 400 },
-    );
-  }
+  const [result, facets, tabCounts] = await Promise.all([
+    browseJobs(filters, sort, page, perPage),
+    wantFacets ? browseFacets(filters) : Promise.resolve(undefined),
+    wantFacets
+      ? browseTabCounts({
+          q: filters.q,
+          region: filters.region,
+          companies: filters.companies,
+        })
+      : Promise.resolve(undefined),
+  ]);
 
-  if (platforms.length) {
-    slugs = slugs.filter((slug) =>
-      platforms.includes(siteBySlug(slug)?.platform ?? ""),
-    );
-  }
-  if (!slugs.length) {
-    return NextResponse.json({
-      jobs: [],
-      total: 0,
-      page,
-      perPage,
-      totalPages: 1,
-      sites_fetched: 0,
-      sites_failed: 0,
-      errors: [],
-    });
-  }
-
-  const payload = await fetchSites(slugs, force);
-  const ok = payload.results.filter((r) => r.ok);
-  const jobs = stableSort(ok.flatMap((r) => compactJobs(r.jobs)));
-  const filtered = q ? jobs.filter((j) => matches(j, q)) : jobs;
-
-  const total = filtered.length;
-  const totalPages = paginated ? Math.max(1, Math.ceil(total / perPage)) : 1;
-  const slice = paginated
-    ? filtered.slice((page - 1) * perPage, page * perPage)
-    : filtered;
-
+  const totalPages = Math.max(1, Math.ceil(result.total / perPage));
   const res = NextResponse.json({
-    jobs: slice,
-    total,
+    jobs: result.jobs,
+    total: result.total,
     page,
     perPage,
     totalPages,
-    sites_fetched: payload.sites_fetched,
-    sites_failed: payload.sites_failed,
-    errors: payload.errors,
+    facets,
+    tabCounts,
   });
   res.headers.set("Cache-Control", CACHE_HEADER);
   return res;

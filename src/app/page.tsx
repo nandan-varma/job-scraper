@@ -1,11 +1,32 @@
 import { ArrowRight, Building2, Globe2, Zap } from "lucide-react";
-import { JobBrowser } from "@/components/job-browser";
+import { JobBrowser, PAGE_SIZE } from "@/components/job-browser";
 import { SITES } from "@/lib/sites";
 import { ALL_PROVIDERS, PLATFORM_META } from "@/lib/platforms";
+import { browseJobs, browseFacets, browseTabCounts } from "@/lib/db/queries";
+import type { JobsPage } from "@/lib/api-client";
 
 const PLATFORMS = ALL_PROVIDERS.map((p) => PLATFORM_META[p]?.label ?? p);
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  // Page 1 of the whole catalog, fetched server-side — no company selection
+  // required, and no client-side loading flash on first paint.
+  const [result, facets, tabCounts] = await Promise.all([
+    browseJobs({}, "newest", 1, PAGE_SIZE),
+    browseFacets({}),
+    browseTabCounts({}),
+  ]);
+  const initialPage: JobsPage = {
+    jobs: result.jobs,
+    total: result.total,
+    page: 1,
+    perPage: PAGE_SIZE,
+    totalPages: Math.max(1, Math.ceil(result.total / PAGE_SIZE)),
+    facets,
+    tabCounts,
+  };
+
   return (
     <>
       {/* Hero */}
@@ -88,7 +109,7 @@ export default function HomePage() {
 
       {/* Browse app */}
       <div id="browse">
-        <JobBrowser initialJobs={[]} initialLoaded={new Set()} />
+        <JobBrowser initialPage={initialPage} />
       </div>
     </>
   );

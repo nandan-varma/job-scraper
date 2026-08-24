@@ -20,8 +20,8 @@ import {
   SALARY_MODES,
   REGION_MODES,
   type Filters,
-  type FacetCounts,
 } from "@/lib/filtering";
+import type { FacetCounts } from "@/lib/db/queries";
 import { ALL_PROVIDERS, PLATFORM_META, type PlatformFacet } from "@/lib/platforms";
 import type { StarterPack } from "@/lib/featured";
 import { CompanyPicker } from "./company-picker";
@@ -43,7 +43,6 @@ export type { Filters } from "@/lib/filtering";
 interface Props {
   filters: Filters;
   onChange: (next: Filters) => void;
-  loadedSlugs: Set<string>;
   onToggleCompany: (slug: string) => void;
   platforms: PlatformFacet[];
   /** Job counts per platform under filters that survive a tab switch. */
@@ -68,7 +67,6 @@ const MATRIX_FIELDS: Array<{
 export function FiltersBar({
   filters,
   onChange,
-  loadedSlugs,
   onToggleCompany,
   platforms,
   tabCounts,
@@ -188,7 +186,6 @@ export function FiltersBar({
       <div className="flex flex-wrap items-center gap-2">
         <CompanyPicker
           selected={filters.companies}
-          loaded={loadedSlugs}
           providers={[...filters.providers]}
           onToggle={onToggleCompany}
           onOpenCompany={(slug) => router.push(`/companies/${slug}`)}

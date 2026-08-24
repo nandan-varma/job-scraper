@@ -1,15 +1,18 @@
 /** Lightweight, dependency-free heuristics for "is this role US-based?" —
  * there's no structured country field on `Job`, only free-text `location`. */
 
-const US_STATE_ABBRS = new Set([
+/** Exported so the server-side region filter (db/queries.ts) can build the
+ * exact same rule as a SQL regex — one definition of "US location", not two
+ * that can drift apart. */
+export const US_STATE_ABBRS = [
   "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id",
   "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms",
   "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok",
   "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv",
   "wi", "wy", "dc",
-]);
+];
 
-const US_KEYWORDS = [
+export const US_KEYWORDS = [
   "united states",
   "usa",
   "u.s.",
@@ -19,12 +22,14 @@ const US_KEYWORDS = [
   "us remote",
 ];
 
+const US_STATE_ABBR_SET = new Set(US_STATE_ABBRS);
+
 export function isUSLocation(location?: string | null): boolean {
   if (!location) return false;
   const l = location.toLowerCase();
   if (US_KEYWORDS.some((k) => l.includes(k))) return true;
   const stateMatch = l.match(/,\s*([a-z]{2})\b/);
-  if (stateMatch && US_STATE_ABBRS.has(stateMatch[1])) return true;
+  if (stateMatch && US_STATE_ABBR_SET.has(stateMatch[1])) return true;
   return false;
 }
 

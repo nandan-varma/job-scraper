@@ -1,5 +1,3 @@
-import type { Job } from "./types";
-
 /**
  * Static metadata about every job platform we can fetch from — what the
  * underlying API does (and doesn't) expose. Lets the UI explain data
@@ -137,19 +135,19 @@ export function platformMeta(platform: string): PlatformMeta | undefined {
 /** Every supported job-provider platform, in display order. */
 export const ALL_PROVIDERS = Object.keys(PLATFORM_META);
 
-/** Distinct platforms present in the loaded set, sorted by role count desc. */
+/** Distinct platforms present in the current result set, sorted by role count desc. */
 export interface PlatformFacet {
   key: string;
   label: string;
   count: number;
 }
 
-export function platformFacets(jobs: Job[]): PlatformFacet[] {
-  const counts = new Map<string, number>();
-  for (const j of jobs) {
-    counts.set(j.platform, (counts.get(j.platform) ?? 0) + 1);
-  }
-  return [...counts.entries()]
+/** Builds the tab-strip list from the server's per-platform facet counts. */
+export function platformFacetsFromCounts(
+  counts: Record<string, number>,
+): PlatformFacet[] {
+  return Object.entries(counts)
+    .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([key, count]) => ({
       key,

@@ -1,7 +1,6 @@
-import { SearchX, Sparkles } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import type { StarterPack } from "@/lib/featured";
 
 export function JobCardSkeleton() {
   return (
@@ -26,48 +25,6 @@ export function JobListSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <JobCardSkeleton key={i} />
       ))}
-    </div>
-  );
-}
-
-/** Shown only while the default feed is still loading (or failed to load) —
- * the app auto-loads a starter set on first visit, so this is a brief,
- * rare state rather than the normal landing experience. */
-export function Onboarding({
-  packs,
-  onLoadPack,
-  children,
-}: {
-  packs: StarterPack[];
-  onLoadPack: (pack: StarterPack) => void;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed bg-card/50 px-6 py-16 text-center">
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-fuchsia-500/20 text-primary">
-        <Sparkles className="size-6" />
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold">Build your job feed</h3>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-          Pick the companies and sources you care about, or start from a
-          curated pack. Filters apply across everything you select.
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {children}
-        {packs.map((pack) => (
-          <Button
-            key={pack.id}
-            variant="outline"
-            size="sm"
-            onClick={() => onLoadPack(pack)}
-          >
-            {pack.label}
-            <span className="text-muted-foreground">{pack.slugs.length}</span>
-          </Button>
-        ))}
-      </div>
     </div>
   );
 }

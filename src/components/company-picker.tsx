@@ -29,7 +29,6 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   selected: Set<string>;
-  loaded: Set<string>;
   /** Active job-provider platforms, used to scope the server search. */
   providers: string[];
   onToggle: (slug: string) => void;
@@ -45,7 +44,6 @@ const LIMIT = 60;
  */
 export function CompanyPicker({
   selected,
-  loaded,
   providers,
   onToggle,
   onOpenCompany,
@@ -137,7 +135,6 @@ export function CompanyPicker({
                 <CommandGroup>
                   {items.map((s) => {
                     const checked = selected.has(s.slug);
-                    const isLoaded = loaded.has(s.slug);
                     return (
                       <CommandItem
                         key={s.slug}
@@ -159,11 +156,6 @@ export function CompanyPicker({
                           {s.name}
                         </span>
                         <ProviderChip platform={s.platform} />
-                        {!isLoaded && (
-                          <span className="text-[10px] text-muted-foreground">
-                            load
-                          </span>
-                        )}
                         {onOpenCompany && (
                           <button
                             type="button"

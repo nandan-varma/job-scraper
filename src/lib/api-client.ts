@@ -1,4 +1,7 @@
 import type { Job } from "./types";
+import type { Filters } from "./filtering";
+import type { FacetCounts } from "./db/queries";
+import { ALL_PROVIDERS } from "./platforms";
 
 export interface SiteRef {
   slug: string;
@@ -6,59 +9,71 @@ export interface SiteRef {
   platform: string;
 }
 
-/** Paginated job response (server-filtered; client never holds the full set). */
+/** Server-paginated jobs page — the client never holds the full catalog. */
 export interface JobsPage {
   jobs: Job[];
   total: number;
   page: number;
   perPage: number;
   totalPages: number;
-  sites_fetched: number;
-  sites_failed: number;
-  errors: string[];
+  facets?: FacetCounts;
+  tabCounts?: Record<string, number>;
 }
 
-interface JobsOpts {
-  sites?: string[];
-  featured?: boolean;
-  all?: boolean;
-  fresh?: boolean;
-  q?: string;
-  platforms?: string[];
-  page?: number;
-  perPage?: number;
-  maxSites?: number;
-}
-
-/** Client-side helper to request jobs from the API route. */
-export async function fetchJobs(opts: JobsOpts = {}): Promise<JobsPage> {
+function browseParams(
+  f: Filters,
+  q: string,
+  page: number,
+  perPage: number,
+  includeFacets: boolean,
+): URLSearchParams {
   const params = new URLSearchParams();
-  if (opts.all) params.set("all", "1");
-  else if (opts.featured) params.set("featured", "1");
-  else if (opts.sites?.length) params.set("sites", opts.sites.join(","));
-  if (opts.fresh) params.set("fresh", "1");
-  if (opts.q) params.set("q", opts.q);
-  if (opts.platforms?.length) params.set("platforms", opts.platforms.join(","));
-  if (opts.maxSites) params.set("maxSites", String(opts.maxSites));
-  if (opts.page) params.set("page", String(opts.page));
-  if (opts.perPage) params.set("perPage", String(opts.perPage));
+  if (q) params.set("q", q);
+  if (f.workMode !== "all") params.set("workMode", f.workMode);
+  if (f.salary !== "all") params.set("salary", f.salary);
+  if (f.region !== "all") params.set("region", f.region);
+  if (f.providers.size && f.providers.size < ALL_PROVIDERS.length) {
+    params.set("platforms", [...f.providers].join(","));
+  }
+  if (f.departments.size) params.set("departments", [...f.departments].join(","));
+  if (f.companies.size) params.set("companies", [...f.companies].join(","));
+  params.set("sort", f.sort);
+  params.set("page", String(page));
+  params.set("perPage", String(perPage));
+  if (!includeFacets) params.set("facets", "0");
+  return params;
+}
 
+/**
+ * The main browse query: searches/filters/sorts/paginates across the WHOLE
+ * synced catalog server-side. `filters.companies` is an optional narrowing
+ * filter, not a prerequisite — an empty set browses every open role.
+ */
+export async function browseJobs(
+  filters: Filters,
+  q: string,
+  page = 1,
+  perPage = 20,
+  includeFacets = true,
+): Promise<JobsPage> {
+  const params = browseParams(filters, q, page, perPage, includeFacets);
   const res = await fetch(`/api/jobs?${params.toString()}`);
   if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
   return res.json();
 }
 
-/** All jobs for one company, server-paginated. */
-export function fetchCompanyJobs(
+/** All jobs for one company, server-paginated (used by the company page). */
+export async function fetchCompanyJobs(
   slug: string,
   opts: { q?: string; page?: number; perPage?: number } = {},
 ): Promise<JobsPage> {
-  return fetchJobs({
-    sites: [slug],
-    q: opts.q,
-    perPage: opts.perPage,
-    page: opts.page,
-  });
+  const params = new URLSearchParams({ sites: slug, facets: "0" });
+  if (opts.q) params.set("q", opts.q);
+  if (opts.page) params.set("page", String(opts.page));
+  if (opts.perPage) params.set("perPage", String(opts.perPage));
+  const res = await fetch(`/api/jobs?${params.toString()}`);
+  if (!res.ok) throw new Error(`Failed to load jobs (${res.status})`);
+  return res.json();
 }
 
 /** Instant server-side company search (capped — the registry is ~8.5k). */
@@ -85,13 +100,4 @@ export async function fetchJobDetail(
   if (!res.ok) return null;
   const data = await res.json();
   return (data as { job?: Job }).job ?? null;
-}
-
-export async function fetchSitesRegistry(): Promise<{
-  count: number;
-  sites: SiteRef[];
-}> {
-  const res = await fetch("/api/sites");
-  if (!res.ok) throw new Error("Failed to load sites");
-  return res.json();
 }
