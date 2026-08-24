@@ -15,7 +15,7 @@
 import "./_env";
 
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, lte } from "drizzle-orm";
 import { db } from "../src/lib/db/client";
 import { syncState } from "../src/lib/db/schema";
 import { syncSite, logSyncAttempt, markSyncSuccess, markSyncFailure } from "../src/lib/db/sync-core";
@@ -58,6 +58,21 @@ function backoffMs(consecutiveFailures: number): number {
 
 const siteBySlug = new Map(SITES.map((s) => [s.slug, s]));
 
+/**
+ * Bookkeeping writes (sync_log/sync_state) must never take down the batch —
+ * if the DB itself is the problem (e.g. out of storage), the *next* site's
+ * fetch will likely fail too and get logged/skipped on its own turn, but a
+ * write failure here must not throw past this point and kill every
+ * remaining site in the run.
+ */
+async function safely(label: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+  } catch (e) {
+    console.error(`  !!    ${label} failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 // --- one site --------------------------------------------------------------
 
 async function syncOneSite(runId: string, slug: string) {
@@ -66,43 +81,47 @@ async function syncOneSite(runId: string, slug: string) {
   const t0 = Date.now();
 
   if (!site) {
-    await logSyncAttempt({
-      runId,
-      siteSlug: slug,
-      platform: platform!,
-      startedAt,
-      durationMs: Date.now() - t0,
-      status: "parse_error",
-      error: "site no longer in registry",
-    });
-    await markSyncFailure(slug);
+    await safely("log", () =>
+      logSyncAttempt({
+        runId,
+        siteSlug: slug,
+        platform: platform!,
+        startedAt,
+        durationMs: Date.now() - t0,
+        status: "parse_error",
+        error: "site no longer in registry",
+      }),
+    );
+    await safely("mark-failure", () => markSyncFailure(slug));
     return { status: "parse_error" as const, jobsUpserted: 0, jobsClosed: 0 };
   }
 
   const outcome = await syncSite(site, startedAt);
   const durationMs = Date.now() - t0;
 
-  await logSyncAttempt({
-    runId,
-    siteSlug: slug,
-    platform: platform!,
-    startedAt,
-    durationMs,
-    status: outcome.status,
-    httpStatus: outcome.httpStatus,
-    jobsFound: outcome.jobsFound,
-    jobsUpserted: outcome.jobsUpserted,
-    jobsClosed: outcome.jobsClosed,
-    error: outcome.error?.slice(0, 500),
-  });
+  await safely("log", () =>
+    logSyncAttempt({
+      runId,
+      siteSlug: slug,
+      platform: platform!,
+      startedAt,
+      durationMs,
+      status: outcome.status,
+      httpStatus: outcome.httpStatus,
+      jobsFound: outcome.jobsFound,
+      jobsUpserted: outcome.jobsUpserted,
+      jobsClosed: outcome.jobsClosed,
+      error: outcome.error?.slice(0, 500),
+    }),
+  );
 
   if (outcome.ok) {
-    await markSyncSuccess(slug, outcome.jobsFound);
+    await safely("mark-success", () => markSyncSuccess(slug, outcome.jobsFound));
     console.log(
       `  ok    ${slug.padEnd(28)} found=${outcome.jobsFound} upserted=${outcome.jobsUpserted} closed=${outcome.jobsClosed} (${durationMs}ms)`,
     );
   } else {
-    await markSyncFailure(slug);
+    await safely("mark-failure", () => markSyncFailure(slug));
     console.log(
       `  FAIL  ${slug.padEnd(28)} ${outcome.status}${outcome.httpStatus ? ` (${outcome.httpStatus})` : ""}: ${(outcome.error ?? "").slice(0, 120)}`,
     );
@@ -112,10 +131,10 @@ async function syncOneSite(runId: string, slug: string) {
 
 async function rescheduleSite(slug: string, tier: number, consecutiveFailures: number, ok: boolean) {
   const intervalMs = ok ? (TIER_INTERVAL_MS[tier] ?? TIER_INTERVAL_MS[2]) : backoffMs(consecutiveFailures + 1);
-  await db
-    .update(syncState)
-    .set({ nextDueAt: sql`now() + interval '1 millisecond' * ${Math.round(intervalMs)}` })
-    .where(eq(syncState.siteSlug, slug));
+  const nextDueAt = new Date(Date.now() + intervalMs);
+  await safely("reschedule", async () => {
+    await db.update(syncState).set({ nextDueAt }).where(eq(syncState.siteSlug, slug));
+  });
 }
 
 // --- main --------------------------------------------------------------------
@@ -130,7 +149,7 @@ async function main() {
     .where(
       force
         ? eq(syncState.platform, platform!)
-        : and(eq(syncState.platform, platform!), lte(syncState.nextDueAt, sql`now()`)),
+        : and(eq(syncState.platform, platform!), lte(syncState.nextDueAt, new Date())),
     )
     .orderBy(asc(syncState.nextDueAt))
     .limit(limit);

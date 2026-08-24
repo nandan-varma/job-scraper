@@ -1,17 +1,18 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set");
+if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  throw new Error("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must both be set");
 }
 
 /**
  * Module-scoped connection: reused across requests within a process (Next.js
- * server runtime) and within a single sync run (GH Actions script). `max: 1`
- * for Neon's pooled connection string keeps this friendly to serverless
- * concurrency limits — Neon's own pooler (pgbouncer) handles fan-out.
+ * server runtime) and within a single sync run (GH Actions script).
  */
-const client = postgres(process.env.DATABASE_URL, { max: 1 });
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 export const db = drizzle(client, { schema });

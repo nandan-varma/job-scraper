@@ -60,11 +60,11 @@ async function main() {
   }
 
   const [{ count: tier1 }] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({ count: sql<number>`count(*)` })
     .from(syncState)
     .where(sql`tier = 1`);
   const [{ count: total }] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({ count: sql<number>`count(*)` })
     .from(syncState);
 
   console.log(`done — ${inserted} sites processed, ${total} total in sync_state (${tier1} tier-1)`);

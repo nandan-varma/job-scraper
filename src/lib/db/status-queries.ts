@@ -1,4 +1,4 @@
-import { and, desc, isNull, isNotNull, ne, sql } from "drizzle-orm";
+import { and, desc, gt, isNull, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "./client";
 import { jobs, syncLog, syncState } from "./schema";
 
@@ -29,16 +29,29 @@ export interface OverallStatus {
   lastSyncAt: string | null;
 }
 
+/** SQLite has no `now() - interval`; compute the cutoff in JS and bind it. */
+function hoursAgo(h: number): Date {
+  return new Date(Date.now() - h * 60 * 60 * 1000);
+}
+
+/** `max()` over an integer-mode timestamp column returns raw unix seconds
+ * through a raw sql<> expression (it doesn't go through drizzle's column
+ * type mapper) — convert back to an ISO string for the UI's timeAgo(). */
+function unixToIso(seconds: number | null): string | null {
+  return seconds == null ? null : new Date(seconds * 1000).toISOString();
+}
+
 /** Per-platform sync health — the source of truth for the /status page. */
 export async function platformStatuses(): Promise<PlatformStatus[]> {
+  const cutoff = hoursAgo(24);
   const stateRows = await db
     .select({
       platform: syncState.platform,
-      sitesTracked: sql<number>`count(*)::int`,
-      syncedLast24h: sql<number>`count(*) filter (where ${syncState.lastSuccessAt} > now() - interval '24 hours')::int`,
-      neverSynced: sql<number>`count(*) filter (where ${syncState.lastSuccessAt} is null)::int`,
-      failing: sql<number>`count(*) filter (where ${syncState.consecutiveFailures} > 0)::int`,
-      lastSuccessAt: sql<string | null>`max(${syncState.lastSuccessAt})`,
+      sitesTracked: sql<number>`count(*)`,
+      syncedLast24h: sql<number>`count(*) filter (where ${gt(syncState.lastSuccessAt, cutoff)})`,
+      neverSynced: sql<number>`count(*) filter (where ${syncState.lastSuccessAt} is null)`,
+      failing: sql<number>`count(*) filter (where ${syncState.consecutiveFailures} > 0)`,
+      lastSuccessAt: sql<number | null>`max(${syncState.lastSuccessAt})`,
     })
     .from(syncState)
     .groupBy(syncState.platform);
@@ -46,7 +59,7 @@ export async function platformStatuses(): Promise<PlatformStatus[]> {
   const openRows = await db
     .select({
       platform: jobs.platform,
-      openJobs: sql<number>`count(*)::int`,
+      openJobs: sql<number>`count(*)`,
     })
     .from(jobs)
     .where(isNull(jobs.closedAt))
@@ -55,7 +68,11 @@ export async function platformStatuses(): Promise<PlatformStatus[]> {
   const openByPlatform = new Map(openRows.map((r) => [r.platform, r.openJobs]));
 
   return stateRows
-    .map((r) => ({ ...r, openJobs: openByPlatform.get(r.platform) ?? 0 }))
+    .map((r) => ({
+      ...r,
+      lastSuccessAt: unixToIso(r.lastSuccessAt),
+      openJobs: openByPlatform.get(r.platform) ?? 0,
+    }))
     .sort((a, b) => b.sitesTracked - a.sitesTracked);
 }
 
@@ -78,25 +95,22 @@ export async function recentFailures(limit = 30): Promise<RecentFailure[]> {
 }
 
 export async function overallStatus(): Promise<OverallStatus> {
+  const cutoff = hoursAgo(24);
   const [openRow] = await db
-    .select({ n: sql<number>`count(*)::int` })
+    .select({ n: sql<number>`count(*)` })
     .from(jobs)
     .where(isNull(jobs.closedAt));
   const [closedRow] = await db
-    .select({ n: sql<number>`count(*)::int` })
+    .select({ n: sql<number>`count(*)` })
     .from(jobs)
-    .where(
-      and(isNotNull(jobs.closedAt), sql`${jobs.closedAt} > now() - interval '24 hours'`),
-    );
-  const [trackedRow] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(syncState);
+    .where(and(isNotNull(jobs.closedAt), gt(jobs.closedAt, cutoff)));
+  const [trackedRow] = await db.select({ n: sql<number>`count(*)` }).from(syncState);
   const [syncedRow] = await db
-    .select({ n: sql<number>`count(*)::int` })
+    .select({ n: sql<number>`count(*)` })
     .from(syncState)
-    .where(sql`${syncState.lastSuccessAt} > now() - interval '24 hours'`);
+    .where(gt(syncState.lastSuccessAt, cutoff));
   const [lastSyncRow] = await db
-    .select({ t: sql<string | null>`max(${syncState.lastSuccessAt})` })
+    .select({ t: sql<number | null>`max(${syncState.lastSuccessAt})` })
     .from(syncState);
 
   return {
@@ -104,6 +118,6 @@ export async function overallStatus(): Promise<OverallStatus> {
     companiesTracked: trackedRow?.n ?? 0,
     companiesSyncedLast24h: syncedRow?.n ?? 0,
     closedLast24h: closedRow?.n ?? 0,
-    lastSyncAt: lastSyncRow?.t ?? null,
+    lastSyncAt: unixToIso(lastSyncRow?.t ?? null),
   };
 }

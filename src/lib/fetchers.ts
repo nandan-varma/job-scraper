@@ -5,27 +5,21 @@ import { decodeEntities, htmlToText, unescapeOnce } from "./html";
 
 /**
  * Every fetcher below returns `FetchedJob[]` — a superset of the public
- * `Job` type that also carries the platform's raw object and every
- * structured field the API actually exposes (requisition ids, explicit
- * workplace-type flags, secondary locations, etc.), not just what the
- * interactive UI happens to render today.
+ * `Job` type that also carries every structured field the API actually
+ * exposes (requisition ids, explicit workplace-type flags, secondary
+ * locations, etc.), not just what the interactive UI happens to render
+ * today. Fields that aren't directly and unambiguously present on the
+ * source are left null rather than guessed.
  *
- * Two rules, non-negotiable:
- *   1. `rawJson` is always the verbatim source object(s) — nothing is ever
- *      discarded, even if no normalized column exists for it yet.
- *   2. `workMode` is only 'structured' when the platform gives an explicit
- *      field (Ashby workplaceType/isRemote, Lever workplaceType,
- *      SmartRecruiters location.remote/hybrid, HiringCafe JSON-LD). Anything
- *      derived by regex over free text/metadata is 'inferred' and must never
- *      be used to exclude data — see workMode() below for why.
+ * `workMode` is only 'structured' when the platform gives an explicit field
+ * (Ashby workplaceType/isRemote, Lever workplaceType, SmartRecruiters
+ * location.remote/hybrid, HiringCafe JSON-LD). Anything derived by regex
+ * over free text/metadata is 'inferred' and must never be used to exclude
+ * data — see workMode() below for why.
  */
 
 function makeFetchedJob(
-  partial: Partial<FetchedJob> & {
-    sourceId: string;
-    title: string;
-    rawJson: unknown;
-  },
+  partial: Partial<FetchedJob> & { sourceId: string; title: string },
 ): FetchedJob {
   return {
     sourceId: partial.sourceId,
@@ -44,12 +38,10 @@ function makeFetchedJob(
     url: partial.url ?? null,
     applyUrl: partial.applyUrl ?? null,
     description: partial.description ?? null,
-    rawHtml: partial.rawHtml ?? null,
     compensationText: partial.compensationText ?? null,
     salaryMin: partial.salaryMin ?? null,
     salaryMax: partial.salaryMax ?? null,
     salaryCurrency: partial.salaryCurrency ?? null,
-    rawJson: partial.rawJson,
   };
 }
 
@@ -142,14 +134,12 @@ export async function fetchAshby(site: Site): Promise<FetchedJob[]> {
       url: j.jobUrl ?? null,
       applyUrl: j.applyUrl ?? null,
       description: htmlToText(j.descriptionHtml ?? ""),
-      rawHtml: j.descriptionHtml ?? null,
       compensationText:
         typeof j.compensation === "string"
           ? j.compensation
           : typeof j.compensation === "object" && j.compensation
             ? (j.compensation.compensationTierSummary ?? null)
             : null,
-      rawJson: j,
     });
   });
 }
@@ -265,8 +255,6 @@ export async function fetchGreenhouse(
           j.absolute_url) ??
         null,
       description: htmlToText(content),
-      rawHtml: content || null,
-      rawJson: { listing: j, detail },
     });
   });
 }
@@ -322,7 +310,6 @@ export async function fetchLever(site: Site): Promise<FetchedJob[]> {
       url: p.hostedUrl ?? null,
       applyUrl: p.applyUrl ?? null,
       description: p.descriptionPlain || p.text || null,
-      rawJson: p,
     });
   });
 }
@@ -401,8 +388,6 @@ export async function fetchWorkday(
       url: publicUrl,
       applyUrl: publicUrl,
       description: htmlToText(descHtml as string),
-      rawHtml: (descHtml as string) || null,
-      rawJson: { listing: p, detail },
     });
   });
 }
@@ -558,7 +543,6 @@ export async function fetchApple(
       url: u,
       applyUrl: u,
       description: parts.length ? parts.join("\n\n") : null,
-      rawJson: { listing: r, detail: jd ?? null },
     });
   });
 }
@@ -629,7 +613,6 @@ export async function fetchSmartRecruiters(
       url,
       applyUrl: (detail.applyUrl as string) || url,
       description: parts.length ? parts.map(htmlToText).join("\n\n") : null,
-      rawJson: { listing: p, detail },
     });
   });
 }
@@ -656,7 +639,6 @@ export async function fetchRoblox(): Promise<FetchedJob[]> {
       location: j.location ?? null,
       url,
       applyUrl: url,
-      rawJson: j,
     });
   });
 }
@@ -818,7 +800,6 @@ export async function fetchHiringCafe(
         salaryMin: d.salary_min,
         salaryMax: d.salary_max,
         salaryCurrency: d.salary_currency,
-        rawJson: d.raw_ld ?? d,
       }),
     );
   });

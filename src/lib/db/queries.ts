@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, like, or, sql, type SQL } from "drizzle-orm";
 import { db } from "./client";
 import { jobs } from "./schema";
 import type { Job, WorkMode } from "@/lib/types";
@@ -18,7 +18,7 @@ const listColumns = {
   applyUrl: jobs.applyUrl,
   compensationText: jobs.compensationText,
   lastSeenAt: jobs.lastSeenAt,
-  hasDescription: sql<boolean>`(${jobs.description} is not null)`,
+  hasDescription: sql<number>`(${jobs.description} is not null)`,
 };
 
 interface ListRow {
@@ -35,7 +35,7 @@ interface ListRow {
   applyUrl: string | null;
   compensationText: string | null;
   lastSeenAt: Date;
-  hasDescription: boolean;
+  hasDescription: number;
 }
 
 function toJob(row: ListRow, description: string | null = null): Job {
@@ -53,7 +53,9 @@ function toJob(row: ListRow, description: string | null = null): Job {
     url: row.url,
     apply_url: row.applyUrl,
     description,
-    hasDescription: row.hasDescription,
+    // SQLite has no native boolean — count/IS NOT NULL expressions come back
+    // as 0/1 integers over the libSQL wire, not real JS booleans.
+    hasDescription: !!row.hasDescription,
     compensation: row.compensationText,
     fetched_at: row.lastSeenAt.toISOString(),
   };
@@ -91,7 +93,7 @@ export async function openCountsBySite(
 ): Promise<Map<string, number>> {
   if (!slugs.length) return new Map();
   const rows = await db
-    .select({ siteSlug: jobs.siteSlug, count: sql<number>`count(*)::int` })
+    .select({ siteSlug: jobs.siteSlug, count: sql<number>`count(*)` })
     .from(jobs)
     .where(and(inArray(jobs.siteSlug, slugs), isNull(jobs.closedAt)))
     .groupBy(jobs.siteSlug);
@@ -100,24 +102,33 @@ export async function openCountsBySite(
 
 // --- server-driven browse: search/filter/facet/paginate the whole catalog ---
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Same rule as isUSLocation() in lib/geo.ts, built from the same shared
+ * word lists — one definition of "US location", not a second hand-written
+ * copy that can drift. SQLite has no regex operator, and a plain OR-chain of
+ * 50-state LIKE patterns blows SQLite's expression-tree depth limit (100) —
+ * so instead of matching, this *extracts* the token right after the first
+ * comma (e.g. "San Francisco, CA, USA" -> "CA") and checks it against the
+ * state list with a single IN clause, verified to be exactly a 2-letter
+ * token (not a prefix of a longer word like "Canada") by requiring it end
+ * at a comma or end-of-string. Always evaluates to a real 0/1 (never SQL
+ * NULL) so `region=intl` correctly includes jobs with no location at all. */
+function buildIsUsLocationSql(): SQL {
+  const keywordConds = US_KEYWORDS.map((k) => like(jobs.location, `%${k}%`));
+  const rest = sql`trim(substr(${jobs.location}, instr(${jobs.location}, ',') + 1))`;
+  const stateToken = sql`lower(substr(${rest}, 1, 2))`;
+  const tokenIsWholeWord = sql`(length(${rest}) = 2 or substr(${rest}, 3, 1) = ',')`;
+  const stateList = sql.join(
+    US_STATE_ABBRS.map((abbr) => sql`${abbr}`),
+    sql.raw(", "),
+  );
+  const stateCond = sql`(
+    instr(${jobs.location}, ',') > 0
+    and ${tokenIsWholeWord}
+    and ${stateToken} in (${stateList})
+  )`;
+  return and(isNotNull(jobs.location), or(...keywordConds, stateCond))!;
 }
-
-/** Same rule as isUSLocation() in lib/geo.ts, translated to a Postgres regex
- * — one definition of "US location" derived from the shared word lists, not
- * a second hand-written copy that can drift. Always evaluates to a real
- * boolean (never SQL NULL) so `region=intl` correctly includes jobs with no
- * location at all, matching the client-side rule it replaces. */
-const US_KEYWORD_PATTERN = US_KEYWORDS.map(escapeRegex).join("|");
-const US_STATE_PATTERN = US_STATE_ABBRS.join("|");
-const isUsLocationSql = sql`(
-  ${jobs.location} is not null
-  and (
-    ${jobs.location} ~* ${US_KEYWORD_PATTERN}
-    or ${jobs.location} ~* ${",\\s*(" + US_STATE_PATTERN + ")\\y"}
-  )
-)`;
+const isUsLocationSql = buildIsUsLocationSql();
 
 export type SortKey = "newest" | "company" | "title";
 
@@ -133,14 +144,15 @@ export interface BrowseFilters {
 
 type FilterKey = keyof BrowseFilters;
 
-/** Full-text search over title/company/department (GIN-indexed) plus a
- * plain substring match over location (not indexed, but cheap at this scale). */
+/** Substring search over title/company/department/location — every word in
+ * the query must appear somewhere in the combined text (a plain-text
+ * approximation of multi-word AND search; no stemming, since SQLite/Turso
+ * needs an FTS5 virtual table for that and this dataset doesn't warrant the
+ * extra moving part yet). */
 function searchCondition(q: string): SQL {
-  return sql`(
-    to_tsvector('english', ${jobs.title} || ' ' || ${jobs.company} || ' ' || coalesce(${jobs.department}, ''))
-      @@ plainto_tsquery('english', ${q})
-    or ${jobs.location} ilike ${"%" + q + "%"}
-  )`;
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
+  const haystack = sql`(lower(${jobs.title}) || ' ' || lower(${jobs.company}) || ' ' || lower(coalesce(${jobs.department}, '')) || ' ' || lower(coalesce(${jobs.location}, '')))`;
+  return and(...words.map((w) => sql`${haystack} like ${"%" + w + "%"}`))!;
 }
 
 /** Builds the WHERE clause for `f`, optionally omitting one dimension — the
@@ -204,7 +216,7 @@ export async function browseJobs(
       .orderBy(...orderFor(sort))
       .limit(perPage)
       .offset((page - 1) * perPage),
-    db.select({ n: sql<number>`count(*)::int` }).from(jobs).where(where),
+    db.select({ n: sql<number>`count(*)` }).from(jobs).where(where),
   ]);
   return { jobs: rows.map((r) => toJob(r)), total: totalRows[0]?.n ?? 0 };
 }
@@ -226,30 +238,30 @@ export interface FacetCounts {
 export async function browseFacets(f: BrowseFilters): Promise<FacetCounts> {
   const [wmRows, salRows, regionRows, platRows, deptRows] = await Promise.all([
     db
-      .select({ v: jobs.workMode, n: sql<number>`count(*)::int` })
+      .select({ v: jobs.workMode, n: sql<number>`count(*)` })
       .from(jobs)
       .where(buildWhere(f, "workMode"))
       .groupBy(jobs.workMode),
     db
       .select({
-        has: sql<boolean>`(${jobs.compensationText} is not null)`,
-        n: sql<number>`count(*)::int`,
+        has: sql<number>`(${jobs.compensationText} is not null)`,
+        n: sql<number>`count(*)`,
       })
       .from(jobs)
       .where(buildWhere(f, "salary"))
       .groupBy(sql`1`),
     db
-      .select({ us: sql<boolean>`${isUsLocationSql}`, n: sql<number>`count(*)::int` })
+      .select({ us: sql<number>`${isUsLocationSql}`, n: sql<number>`count(*)` })
       .from(jobs)
       .where(buildWhere(f, "region"))
       .groupBy(sql`1`),
     db
-      .select({ v: jobs.platform, n: sql<number>`count(*)::int` })
+      .select({ v: jobs.platform, n: sql<number>`count(*)` })
       .from(jobs)
       .where(buildWhere(f, "platforms"))
       .groupBy(jobs.platform),
     db
-      .select({ v: jobs.department, n: sql<number>`count(*)::int` })
+      .select({ v: jobs.department, n: sql<number>`count(*)` })
       .from(jobs)
       .where(and(buildWhere(f, "departments"), isNotNull(jobs.department)))
       .groupBy(jobs.department)
@@ -289,7 +301,7 @@ export async function browseTabCounts(
   f: Pick<BrowseFilters, "q" | "region" | "companies">,
 ): Promise<Record<string, number>> {
   const rows = await db
-    .select({ v: jobs.platform, n: sql<number>`count(*)::int` })
+    .select({ v: jobs.platform, n: sql<number>`count(*)` })
     .from(jobs)
     .where(buildWhere(f))
     .groupBy(jobs.platform);

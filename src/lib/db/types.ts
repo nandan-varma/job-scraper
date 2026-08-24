@@ -24,13 +24,10 @@ export interface FetchedJob {
   url: string | null;
   applyUrl: string | null;
   description: string | null;
-  rawHtml: string | null;
   compensationText: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
-  /** Full verbatim source object(s) — list + detail, merged. Never dropped. */
-  rawJson: unknown;
 }
 
 export type SyncStatus = "ok" | "http_error" | "timeout" | "parse_error" | "empty";

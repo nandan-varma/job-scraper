@@ -58,12 +58,10 @@ function toRow(
     url: j.url,
     applyUrl: j.applyUrl,
     description: j.description,
-    rawHtml: j.rawHtml,
     compensationText: j.compensationText,
-    salaryMin: j.salaryMin?.toString() ?? null,
-    salaryMax: j.salaryMax?.toString() ?? null,
+    salaryMin: j.salaryMin ?? null,
+    salaryMax: j.salaryMax ?? null,
     salaryCurrency: j.salaryCurrency,
-    rawJson: j.rawJson,
     contentHash: contentHash(j),
     firstSeenAt: runStartedAt,
     lastSeenAt: runStartedAt,
@@ -114,19 +112,19 @@ export async function upsertSiteJobs(
           url: sql`excluded.url`,
           applyUrl: sql`excluded.apply_url`,
           description: sql`excluded.description`,
-          rawHtml: sql`excluded.raw_html`,
           compensationText: sql`excluded.compensation_text`,
           salaryMin: sql`excluded.salary_min`,
           salaryMax: sql`excluded.salary_max`,
           salaryCurrency: sql`excluded.salary_currency`,
-          rawJson: sql`excluded.raw_json`,
           lastSeenAt: sql`excluded.last_seen_at`,
           // A posting that reappears after being marked closed is reopened.
           closedAt: sql`NULL`,
           // Only bump updated_at (and thus "recently updated" ordering) when
           // the content actually changed — every pass would otherwise look
-          // like every job was just updated.
-          updatedAt: sql`CASE WHEN ${jobs.contentHash} IS DISTINCT FROM excluded.content_hash THEN excluded.updated_at ELSE ${jobs.updatedAt} END`,
+          // like every job was just updated. SQLite's `IS NOT` is the
+          // null-safe distinctness comparison (Postgres calls this
+          // IS DISTINCT FROM).
+          updatedAt: sql`CASE WHEN ${jobs.contentHash} IS NOT excluded.content_hash THEN excluded.updated_at ELSE ${jobs.updatedAt} END`,
           contentHash: sql`excluded.content_hash`,
         },
       });
@@ -149,7 +147,7 @@ export async function sweepClosed(
 ): Promise<number> {
   const result = await db
     .update(jobs)
-    .set({ closedAt: sql`now()` })
+    .set({ closedAt: new Date() })
     .where(
       and(
         eq(jobs.siteSlug, siteSlug),
@@ -199,8 +197,8 @@ export async function markSyncSuccess(
   await db
     .update(syncState)
     .set({
-      lastAttemptAt: sql`now()`,
-      lastSuccessAt: sql`now()`,
+      lastAttemptAt: new Date(),
+      lastSuccessAt: new Date(),
       consecutiveFailures: 0,
       lastOpenCount: openCount,
     })
@@ -212,7 +210,7 @@ export async function markSyncFailure(siteSlug: string): Promise<void> {
   await db
     .update(syncState)
     .set({
-      lastAttemptAt: sql`now()`,
+      lastAttemptAt: new Date(),
       consecutiveFailures: sql`${syncState.consecutiveFailures} + 1`,
     })
     .where(eq(syncState.siteSlug, siteSlug));
