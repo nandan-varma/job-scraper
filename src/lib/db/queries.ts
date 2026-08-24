@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, like, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
 import { db } from "./client";
 import { jobs } from "./schema";
+import { cached } from "./cache";
 import type { Job, WorkMode } from "@/lib/types";
-import { US_KEYWORDS, US_STATE_ABBRS } from "@/lib/geo";
+
+const FACETS_TTL_MS = 30_000;
 
 const listColumns = {
   siteSlug: jobs.siteSlug,
@@ -102,34 +104,6 @@ export async function openCountsBySite(
 
 // --- server-driven browse: search/filter/facet/paginate the whole catalog ---
 
-/** Same rule as isUSLocation() in lib/geo.ts, built from the same shared
- * word lists — one definition of "US location", not a second hand-written
- * copy that can drift. SQLite has no regex operator, and a plain OR-chain of
- * 50-state LIKE patterns blows SQLite's expression-tree depth limit (100) —
- * so instead of matching, this *extracts* the token right after the first
- * comma (e.g. "San Francisco, CA, USA" -> "CA") and checks it against the
- * state list with a single IN clause, verified to be exactly a 2-letter
- * token (not a prefix of a longer word like "Canada") by requiring it end
- * at a comma or end-of-string. Always evaluates to a real 0/1 (never SQL
- * NULL) so `region=intl` correctly includes jobs with no location at all. */
-function buildIsUsLocationSql(): SQL {
-  const keywordConds = US_KEYWORDS.map((k) => like(jobs.location, `%${k}%`));
-  const rest = sql`trim(substr(${jobs.location}, instr(${jobs.location}, ',') + 1))`;
-  const stateToken = sql`lower(substr(${rest}, 1, 2))`;
-  const tokenIsWholeWord = sql`(length(${rest}) = 2 or substr(${rest}, 3, 1) = ',')`;
-  const stateList = sql.join(
-    US_STATE_ABBRS.map((abbr) => sql`${abbr}`),
-    sql.raw(", "),
-  );
-  const stateCond = sql`(
-    instr(${jobs.location}, ',') > 0
-    and ${tokenIsWholeWord}
-    and ${stateToken} in (${stateList})
-  )`;
-  return and(isNotNull(jobs.location), or(...keywordConds, stateCond))!;
-}
-const isUsLocationSql = buildIsUsLocationSql();
-
 export type SortKey = "newest" | "company" | "title";
 
 export interface BrowseFilters {
@@ -171,7 +145,7 @@ function buildWhere(f: BrowseFilters, omit?: FilterKey): SQL {
     );
   }
   if (omit !== "region" && f.region) {
-    conds.push(f.region === "us" ? isUsLocationSql : sql`not ${isUsLocationSql}`);
+    conds.push(eq(jobs.isUs, f.region === "us"));
   }
   if (omit !== "platforms" && f.platforms?.length) {
     conds.push(inArray(jobs.platform, f.platforms));
@@ -200,8 +174,25 @@ export interface BrowseResult {
 }
 
 /** The main catalog query — search + every filter dimension + sort + page,
- * all in SQL. No client-side company selection required beforehand. */
+ * all in SQL. No client-side company selection required beforehand.
+ * Cached briefly: page 1 of the default (no-filter) view is what nearly
+ * every fresh visit requests, and a Turso round-trip with a sort costs
+ * ~1-1.5s even with the right index in place — worth eating 30s of
+ * staleness for, same as the facet queries. */
 export async function browseJobs(
+  f: BrowseFilters,
+  sort: SortKey,
+  page: number,
+  perPage: number,
+): Promise<BrowseResult> {
+  return cached(
+    `jobs:${JSON.stringify(f)}:${sort}:${page}:${perPage}`,
+    FACETS_TTL_MS,
+    () => computeBrowseJobs(f, sort, page, perPage),
+  );
+}
+
+async function computeBrowseJobs(
   f: BrowseFilters,
   sort: SortKey,
   page: number,
@@ -236,6 +227,10 @@ export interface FacetCounts {
  * predicate" faceting, just computed in SQL against the whole catalog
  * instead of whatever happened to be loaded in the browser). */
 export async function browseFacets(f: BrowseFilters): Promise<FacetCounts> {
+  return cached(`facets:${JSON.stringify(f)}`, FACETS_TTL_MS, () => computeBrowseFacets(f));
+}
+
+async function computeBrowseFacets(f: BrowseFilters): Promise<FacetCounts> {
   const [wmRows, salRows, regionRows, platRows, deptRows] = await Promise.all([
     db
       .select({ v: jobs.workMode, n: sql<number>`count(*)` })
@@ -251,10 +246,10 @@ export async function browseFacets(f: BrowseFilters): Promise<FacetCounts> {
       .where(buildWhere(f, "salary"))
       .groupBy(sql`1`),
     db
-      .select({ us: sql<number>`${isUsLocationSql}`, n: sql<number>`count(*)` })
+      .select({ us: jobs.isUs, n: sql<number>`count(*)` })
       .from(jobs)
       .where(buildWhere(f, "region"))
-      .groupBy(sql`1`),
+      .groupBy(jobs.isUs),
     db
       .select({ v: jobs.platform, n: sql<number>`count(*)` })
       .from(jobs)
@@ -300,10 +295,12 @@ export async function browseFacets(f: BrowseFilters): Promise<FacetCounts> {
 export async function browseTabCounts(
   f: Pick<BrowseFilters, "q" | "region" | "companies">,
 ): Promise<Record<string, number>> {
-  const rows = await db
-    .select({ v: jobs.platform, n: sql<number>`count(*)` })
-    .from(jobs)
-    .where(buildWhere(f))
-    .groupBy(jobs.platform);
-  return Object.fromEntries(rows.map((r) => [r.v, r.n]));
+  return cached(`tabs:${JSON.stringify(f)}`, FACETS_TTL_MS, async () => {
+    const rows = await db
+      .select({ v: jobs.platform, n: sql<number>`count(*)` })
+      .from(jobs)
+      .where(buildWhere(f))
+      .groupBy(jobs.platform);
+    return Object.fromEntries(rows.map((r) => [r.v, r.n]));
+  });
 }

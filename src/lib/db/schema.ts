@@ -65,6 +65,16 @@ export const jobs = sqliteTable(
     applyUrl: text("apply_url"),
     description: text("description"),
 
+    /**
+     * Precomputed at sync time from lib/geo.ts's isUSLocation() — the same
+     * heuristic the region filter always used, just evaluated once in JS
+     * and stored instead of re-run as a SQL expression on every query.
+     * SQLite can't index a computed LIKE/substr expression, so the region
+     * facet (a common default — geo-nudged on for US visitors) was a full
+     * table scan on every uncached request; this column is indexed below.
+     */
+    isUs: integer("is_us", { mode: "boolean" }).notNull().default(false),
+
     /** Verbatim compensation summary string, when that's all the platform gives. */
     compensationText: text("compensation_text"),
     /** Only populated from structured numeric fields — never regex-parsed from prose. */
@@ -95,6 +105,10 @@ export const jobs = sqliteTable(
       .where(sql`${t.closedAt} is null`),
     index("jobs_platform_idx")
       .on(t.platform)
+      .where(sql`${t.closedAt} is null`),
+    index("jobs_region_idx").on(t.isUs).where(sql`${t.closedAt} is null`),
+    index("jobs_department_idx")
+      .on(t.department)
       .where(sql`${t.closedAt} is null`),
   ],
 );
@@ -136,6 +150,13 @@ export const syncLog = sqliteTable(
   (t) => [
     index("sync_log_run_idx").on(t.runId),
     index("sync_log_site_idx").on(t.siteSlug, t.startedAt),
+    // Partial index over only non-'ok' rows (the rare case) — the /status
+    // page's "recent failures" query filters on this and sorts by time;
+    // 'ok' rows (the vast majority as the table grows) never enter this
+    // index at all, so it stays small regardless of total log volume.
+    index("sync_log_failures_idx")
+      .on(t.startedAt)
+      .where(sql`${t.status} != 'ok'`),
   ],
 );
 

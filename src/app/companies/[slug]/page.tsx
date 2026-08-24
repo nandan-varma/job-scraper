@@ -4,7 +4,9 @@ import { siteBySlug, fetchSites, compactJobs } from "@/lib/jobs";
 import { PLATFORM_META } from "@/lib/platforms";
 import { CompanyView } from "@/components/company-view";
 
-export const dynamic = "force-dynamic";
+// On-demand ISR: rendered fresh on first visit per company, then cached —
+// 8,502 possible pages is too many to force-dynamic-render on every hit.
+export const revalidate = 120;
 
 /** First page seeded server-side for an instant first paint (no client effect). */
 const PAGE = 100;

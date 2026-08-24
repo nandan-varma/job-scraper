@@ -1,0 +1,1 @@
+CREATE INDEX `sync_log_failures_idx` ON `sync_log` (`started_at`) WHERE "sync_log"."status" != 'ok';

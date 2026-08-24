@@ -1,6 +1,11 @@
 import { and, desc, gt, isNull, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "./client";
 import { jobs, syncLog, syncState } from "./schema";
+import { cached } from "./cache";
+
+/** /status is a dashboard, not a live ticker — 60s staleness is invisible
+ * and turns 5+ sequential ~300ms Turso round-trips into zero on repeat loads. */
+const STATUS_TTL_MS = 60_000;
 
 export interface PlatformStatus {
   platform: string;
@@ -43,27 +48,32 @@ function unixToIso(seconds: number | null): string | null {
 
 /** Per-platform sync health — the source of truth for the /status page. */
 export async function platformStatuses(): Promise<PlatformStatus[]> {
-  const cutoff = hoursAgo(24);
-  const stateRows = await db
-    .select({
-      platform: syncState.platform,
-      sitesTracked: sql<number>`count(*)`,
-      syncedLast24h: sql<number>`count(*) filter (where ${gt(syncState.lastSuccessAt, cutoff)})`,
-      neverSynced: sql<number>`count(*) filter (where ${syncState.lastSuccessAt} is null)`,
-      failing: sql<number>`count(*) filter (where ${syncState.consecutiveFailures} > 0)`,
-      lastSuccessAt: sql<number | null>`max(${syncState.lastSuccessAt})`,
-    })
-    .from(syncState)
-    .groupBy(syncState.platform);
+  return cached("platformStatuses", STATUS_TTL_MS, computePlatformStatuses);
+}
 
-  const openRows = await db
-    .select({
-      platform: jobs.platform,
-      openJobs: sql<number>`count(*)`,
-    })
-    .from(jobs)
-    .where(isNull(jobs.closedAt))
-    .groupBy(jobs.platform);
+async function computePlatformStatuses(): Promise<PlatformStatus[]> {
+  const cutoff = hoursAgo(24);
+  const [stateRows, openRows] = await Promise.all([
+    db
+      .select({
+        platform: syncState.platform,
+        sitesTracked: sql<number>`count(*)`,
+        syncedLast24h: sql<number>`count(*) filter (where ${gt(syncState.lastSuccessAt, cutoff)})`,
+        neverSynced: sql<number>`count(*) filter (where ${syncState.lastSuccessAt} is null)`,
+        failing: sql<number>`count(*) filter (where ${syncState.consecutiveFailures} > 0)`,
+        lastSuccessAt: sql<number | null>`max(${syncState.lastSuccessAt})`,
+      })
+      .from(syncState)
+      .groupBy(syncState.platform),
+    db
+      .select({
+        platform: jobs.platform,
+        openJobs: sql<number>`count(*)`,
+      })
+      .from(jobs)
+      .where(isNull(jobs.closedAt))
+      .groupBy(jobs.platform),
+  ]);
 
   const openByPlatform = new Map(openRows.map((r) => [r.platform, r.openJobs]));
 
@@ -78,40 +88,46 @@ export async function platformStatuses(): Promise<PlatformStatus[]> {
 
 /** Most recent non-'ok' sync attempts, newest first. */
 export async function recentFailures(limit = 30): Promise<RecentFailure[]> {
-  const rows = await db
-    .select({
-      siteSlug: syncLog.siteSlug,
-      platform: syncLog.platform,
-      status: syncLog.status,
-      httpStatus: syncLog.httpStatus,
-      error: syncLog.error,
-      startedAt: syncLog.startedAt,
-    })
-    .from(syncLog)
-    .where(ne(syncLog.status, "ok"))
-    .orderBy(desc(syncLog.startedAt))
-    .limit(limit);
-  return rows.map((r) => ({ ...r, startedAt: r.startedAt.toISOString() }));
+  return cached(`recentFailures:${limit}`, STATUS_TTL_MS, async () => {
+    const rows = await db
+      .select({
+        siteSlug: syncLog.siteSlug,
+        platform: syncLog.platform,
+        status: syncLog.status,
+        httpStatus: syncLog.httpStatus,
+        error: syncLog.error,
+        startedAt: syncLog.startedAt,
+      })
+      .from(syncLog)
+      .where(ne(syncLog.status, "ok"))
+      .orderBy(desc(syncLog.startedAt))
+      .limit(limit);
+    return rows.map((r) => ({ ...r, startedAt: r.startedAt.toISOString() }));
+  });
 }
 
 export async function overallStatus(): Promise<OverallStatus> {
+  return cached("overallStatus", STATUS_TTL_MS, computeOverallStatus);
+}
+
+async function computeOverallStatus(): Promise<OverallStatus> {
   const cutoff = hoursAgo(24);
-  const [openRow] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(jobs)
-    .where(isNull(jobs.closedAt));
-  const [closedRow] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(jobs)
-    .where(and(isNotNull(jobs.closedAt), gt(jobs.closedAt, cutoff)));
-  const [trackedRow] = await db.select({ n: sql<number>`count(*)` }).from(syncState);
-  const [syncedRow] = await db
-    .select({ n: sql<number>`count(*)` })
-    .from(syncState)
-    .where(gt(syncState.lastSuccessAt, cutoff));
-  const [lastSyncRow] = await db
-    .select({ t: sql<number | null>`max(${syncState.lastSuccessAt})` })
-    .from(syncState);
+  const [[openRow], [closedRow], [trackedRow], [syncedRow], [lastSyncRow]] =
+    await Promise.all([
+      db.select({ n: sql<number>`count(*)` }).from(jobs).where(isNull(jobs.closedAt)),
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(jobs)
+        .where(and(isNotNull(jobs.closedAt), gt(jobs.closedAt, cutoff))),
+      db.select({ n: sql<number>`count(*)` }).from(syncState),
+      db
+        .select({ n: sql<number>`count(*)` })
+        .from(syncState)
+        .where(gt(syncState.lastSuccessAt, cutoff)),
+      db
+        .select({ t: sql<number | null>`max(${syncState.lastSuccessAt})` })
+        .from(syncState),
+    ]);
 
   return {
     totalOpenJobs: openRow?.n ?? 0,

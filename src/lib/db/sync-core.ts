@@ -5,6 +5,7 @@ import { jobs, syncLog, syncState, type NewJobRow } from "./schema";
 import type { FetchedJob, SyncStatus } from "./types";
 import { FETCHERS, FULL_SYNC_CAP } from "../fetchers";
 import { HttpError } from "../http";
+import { isUSLocation } from "../geo";
 import type { Site } from "../types";
 
 /**
@@ -58,6 +59,7 @@ function toRow(
     url: j.url,
     applyUrl: j.applyUrl,
     description: j.description,
+    isUs: isUSLocation(j.location),
     compensationText: j.compensationText,
     salaryMin: j.salaryMin ?? null,
     salaryMax: j.salaryMax ?? null,
@@ -112,6 +114,7 @@ export async function upsertSiteJobs(
           url: sql`excluded.url`,
           applyUrl: sql`excluded.apply_url`,
           description: sql`excluded.description`,
+          isUs: sql`excluded.is_us`,
           compensationText: sql`excluded.compensation_text`,
           salaryMin: sql`excluded.salary_min`,
           salaryMax: sql`excluded.salary_max`,
@@ -156,6 +159,22 @@ export async function sweepClosed(
       ),
     )
     .returning({ id: jobs.id });
+  return result.length;
+}
+
+/**
+ * sync_log is an append-only audit trail with no natural cap — left alone,
+ * it grows forever across every site synced on every cron tick. Delete
+ * anything older than `retentionDays`; callers invoke this occasionally
+ * (see scripts/sync.ts), not on every run, since it's a maintenance task
+ * rather than something that needs to happen every 20 minutes.
+ */
+export async function pruneSyncLog(retentionDays = 14): Promise<number> {
+  const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+  const result = await db
+    .delete(syncLog)
+    .where(lt(syncLog.startedAt, cutoff))
+    .returning({ id: syncLog.id });
   return result.length;
 }
 

@@ -18,7 +18,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, lte } from "drizzle-orm";
 import { db } from "../src/lib/db/client";
 import { syncState } from "../src/lib/db/schema";
-import { syncSite, logSyncAttempt, markSyncSuccess, markSyncFailure } from "../src/lib/db/sync-core";
+import { syncSite, logSyncAttempt, markSyncSuccess, markSyncFailure, pruneSyncLog } from "../src/lib/db/sync-core";
 import { FETCHERS } from "../src/lib/fetchers";
 import { SITES } from "../src/lib/sites";
 
@@ -196,6 +196,16 @@ async function main() {
     // drift, credential problem) rather than N unrelated site outages.
     // Exit non-zero so the GH Actions job (and its failure notification) fires.
     process.exitCode = 1;
+  }
+
+  // sync_log has no natural cap — prune occasionally rather than every run
+  // (this fires on ~5% of invocations; with a cron tick every 20 minutes
+  // across 8 platform shards, that's still several times a day).
+  if (Math.random() < 0.05) {
+    await safely("prune-sync-log", async () => {
+      const deleted = await pruneSyncLog();
+      if (deleted) console.log(`  pruned ${deleted} sync_log rows older than 14 days`);
+    });
   }
 }
 

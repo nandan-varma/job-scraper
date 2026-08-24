@@ -7,6 +7,14 @@ import { ALL_PROVIDERS } from "./platforms";
  * only holds the UI-facing types and constants.
  */
 
+/** Default page size for browseJobs. Lives here (not job-browser.tsx) because
+ * that's a "use client" module — a Server Component importing a plain
+ * constant from a client-boundary file can silently resolve to `undefined`
+ * (Next only reliably exposes component references across that boundary),
+ * which turned into `browseJobs(..., undefined)` fetching the entire
+ * 200k+-row table instead of one page of it. */
+export const PAGE_SIZE = 30;
+
 export type WorkModeFilter = "all" | "remote" | "hybrid" | "onsite";
 export type SortKey = "newest" | "company" | "title";
 export type SalaryFilter = "all" | "has" | "none";

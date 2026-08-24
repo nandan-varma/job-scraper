@@ -53,5 +53,10 @@ export function GET(req: NextRequest) {
     platform: s.platform,
   }));
 
-  return NextResponse.json({ count: top.length, total, q, sites: top });
+  const res = NextResponse.json({ count: top.length, total, q, sites: top });
+  // sites.ts is a static, git-committed registry — it only changes on
+  // redeploy, so this can be cached aggressively (unlike /api/jobs, which
+  // reflects a DB the sync engine updates continuously).
+  res.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  return res;
 }

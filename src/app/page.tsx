@@ -1,5 +1,6 @@
 import { ArrowRight, Building2, Globe2, Zap } from "lucide-react";
-import { JobBrowser, PAGE_SIZE } from "@/components/job-browser";
+import { JobBrowser } from "@/components/job-browser";
+import { PAGE_SIZE } from "@/lib/filtering";
 import { SITES } from "@/lib/sites";
 import { ALL_PROVIDERS, PLATFORM_META } from "@/lib/platforms";
 import { browseJobs, browseFacets, browseTabCounts } from "@/lib/db/queries";
@@ -7,7 +8,10 @@ import type { JobsPage } from "@/lib/api-client";
 
 const PLATFORMS = ALL_PROVIDERS.map((p) => PLATFORM_META[p]?.label ?? p);
 
-export const dynamic = "force-dynamic";
+// The sync engine updates the DB on a ~20-minute cadence, so up to 60s of
+// staleness here is invisible — ISR serves cached HTML for repeat visits
+// instead of re-querying Turso on every request.
+export const revalidate = 60;
 
 export default async function HomePage() {
   // Page 1 of the whole catalog, fetched server-side — no company selection

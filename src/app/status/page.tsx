@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+// Dashboard, not a live ticker — matches the in-memory query cache's TTL
+// (src/lib/db/cache.ts) so a fresh ISR regeneration still gets cache hits.
+export const revalidate = 60;
 export const metadata = { title: "Sync status — EveryRole" };
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {

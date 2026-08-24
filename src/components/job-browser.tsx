@@ -21,6 +21,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { JobCard } from "./job-card";
 import { JobDetail } from "./job-detail";
 import { FiltersBar, DEFAULT_FILTERS, type Filters } from "./filters";
+import { PAGE_SIZE } from "@/lib/filtering";
 import { CommandMenu } from "./command-menu";
 import { EmptyState, JobListSkeleton } from "./states";
 
@@ -29,7 +30,6 @@ interface Props {
   initialPage: JobsPage;
 }
 
-export const PAGE_SIZE = 30;
 /** Height of the sticky site header (h-14), used to offset the sticky detail pane. */
 const HEADER_HEIGHT = 56;
 
