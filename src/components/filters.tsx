@@ -273,31 +273,35 @@ export function FiltersBar({
               )}
             </div>
             <div className="p-2">
-              <FilterSection label="Department">
-                {platforms.length === 0 ? null : (
-                  <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
-                    {deptCoverage.available > 0
-                      ? `${deptPlatforms} of ${platforms.length} sources · ${pct(deptCoverage)}% of roles`
-                      : "None of the loaded sources provide departments."}
-                  </p>
-                )}
-                {facets.departments.length === 0 ? (
-                  <Muted>No departments in the loaded roles.</Muted>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto">
-                    <FacetList>
-                      {facets.departments.map((d) => (
-                        <FacetRow
-                          key={d.name}
-                          checked={filters.departments.has(d.name)}
-                          onToggle={() => toggleDepartment(d.name)}
-                          label={d.name}
-                          hint={d.count.toLocaleString()}
-                        />
-                      ))}
-                    </FacetList>
-                  </div>
-                )}
+              <FilterSection label="Region">
+                <div className="flex rounded-lg border bg-muted/40 p-0.5">
+                  {REGION_MODES.map((m) => {
+                    const count = facets.region[m.value];
+                    return (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => patch({ region: m.value })}
+                        className={cn(
+                          "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                          filters.region === m.value
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <span className="inline-flex flex-col items-center leading-tight">
+                          {m.label}
+                          <span className="text-[10px] tabular-nums opacity-60">
+                            {count.toLocaleString()}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1 px-1 text-[11px] leading-snug text-muted-foreground">
+                  Guessed from the role&apos;s location text — not exact.
+                </p>
               </FilterSection>
 
               {salaryCoverage.available > 0 && (
@@ -330,35 +334,31 @@ export function FiltersBar({
                 </FilterSection>
               )}
 
-              <FilterSection label="Region">
-                <div className="flex rounded-lg border bg-muted/40 p-0.5">
-                  {REGION_MODES.map((m) => {
-                    const count = facets.region[m.value];
-                    return (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => patch({ region: m.value })}
-                        className={cn(
-                          "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                          filters.region === m.value
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        <span className="inline-flex flex-col items-center leading-tight">
-                          {m.label}
-                          <span className="text-[10px] tabular-nums opacity-60">
-                            {count.toLocaleString()}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-1 px-1 text-[11px] leading-snug text-muted-foreground">
-                  Guessed from the role&apos;s location text — not exact.
-                </p>
+              <FilterSection label="Department">
+                {platforms.length === 0 ? null : (
+                  <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
+                    {deptCoverage.available > 0
+                      ? `${deptPlatforms} of ${platforms.length} sources · ${pct(deptCoverage)}% of roles`
+                      : "None of the loaded sources provide departments."}
+                  </p>
+                )}
+                {facets.departments.length === 0 ? (
+                  <Muted>No departments in the loaded roles.</Muted>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto">
+                    <FacetList>
+                      {facets.departments.map((d) => (
+                        <FacetRow
+                          key={d.name}
+                          checked={filters.departments.has(d.name)}
+                          onToggle={() => toggleDepartment(d.name)}
+                          label={d.name}
+                          hint={d.count.toLocaleString()}
+                        />
+                      ))}
+                    </FacetList>
+                  </div>
+                )}
               </FilterSection>
             </div>
           </PopoverContent>
