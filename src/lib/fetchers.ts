@@ -1,34 +1,81 @@
 import type { Job, Site, WorkMode } from "./types";
+import type { FetchedJob } from "./db/types";
 import { getJson, getText, pool, sleep } from "./http";
 import { decodeEntities, htmlToText, unescapeOnce } from "./html";
 
-/** Helper to build a normalized Job with stable id. */
-function makeJob(
-  site: Site,
-  sourceId: string,
-  partial: Partial<Job> & { title?: string },
-): Job {
+/**
+ * Every fetcher below returns `FetchedJob[]` — a superset of the public
+ * `Job` type that also carries the platform's raw object and every
+ * structured field the API actually exposes (requisition ids, explicit
+ * workplace-type flags, secondary locations, etc.), not just what the
+ * interactive UI happens to render today.
+ *
+ * Two rules, non-negotiable:
+ *   1. `rawJson` is always the verbatim source object(s) — nothing is ever
+ *      discarded, even if no normalized column exists for it yet.
+ *   2. `workMode` is only 'structured' when the platform gives an explicit
+ *      field (Ashby workplaceType/isRemote, Lever workplaceType,
+ *      SmartRecruiters location.remote/hybrid, HiringCafe JSON-LD). Anything
+ *      derived by regex over free text/metadata is 'inferred' and must never
+ *      be used to exclude data — see workMode() below for why.
+ */
+
+function makeFetchedJob(
+  partial: Partial<FetchedJob> & {
+    sourceId: string;
+    title: string;
+    rawJson: unknown;
+  },
+): FetchedJob {
   return {
-    id: `${site.slug}:${sourceId}`,
-    site: site.slug,
-    company: site.name,
-    platform: site.platform,
-    source_id: sourceId,
-    title: partial.title ?? "Untitled",
+    sourceId: partial.sourceId,
+    title: partial.title.trim() || "Untitled",
     department: partial.department ?? null,
+    departmentPath: partial.departmentPath ?? null,
     location: partial.location ?? null,
-    work_mode: partial.work_mode ?? null,
-    posted_date: partial.posted_date ?? null,
+    secondaryLocations: partial.secondaryLocations ?? null,
+    workMode: partial.workMode ?? null,
+    workModeSource: partial.workModeSource ?? "inferred",
+    employmentType: partial.employmentType ?? null,
+    requisitionId: partial.requisitionId ?? null,
+    postedDate: partial.postedDate ?? null,
+    updatedAtSource: partial.updatedAtSource ?? null,
+    applicationDeadline: partial.applicationDeadline ?? null,
     url: partial.url ?? null,
-    apply_url: partial.apply_url ?? null,
+    applyUrl: partial.applyUrl ?? null,
     description: partial.description ?? null,
-    compensation: partial.compensation ?? null,
-    fetched_at: new Date().toISOString(),
-    ...partial,
+    rawHtml: partial.rawHtml ?? null,
+    compensationText: partial.compensationText ?? null,
+    salaryMin: partial.salaryMin ?? null,
+    salaryMax: partial.salaryMax ?? null,
+    salaryCurrency: partial.salaryCurrency ?? null,
+    rawJson: partial.rawJson,
   };
 }
 
-/** Normalize a date to YYYY-MM-DD or null. */
+/** Project a rich FetchedJob down to the lean public `Job` shape the UI consumes. */
+export function toJob(site: Site, f: FetchedJob): Job {
+  return {
+    id: `${site.slug}:${f.sourceId}`,
+    site: site.slug,
+    company: site.name,
+    platform: site.platform,
+    source_id: f.sourceId,
+    title: f.title,
+    department: f.department,
+    location: f.location,
+    work_mode: f.workMode,
+    posted_date: f.postedDate,
+    url: f.url,
+    apply_url: f.applyUrl,
+    description: f.description,
+    compensation: f.compensationText,
+    fetched_at: new Date().toISOString(),
+  };
+}
+
+/** Normalize a date to YYYY-MM-DD or null. Rejects anything not already a real date
+ * (relative strings like "Posted Today" are intentionally left null, not guessed at). */
 export function isoDate(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   const s = String(v).slice(0, 10);
@@ -38,9 +85,28 @@ export function isoDate(v: unknown): string | null {
   return s;
 }
 
+const NO_CAP = Infinity;
+
 // --- Ashby ---------------------------------------------------------------
 
-export async function fetchAshby(site: Site): Promise<Job[]> {
+/** Ashby gives an explicit workplaceType/isRemote — no metadata guessing needed. */
+function ashbyWorkMode(
+  workplaceType: unknown,
+  isRemote: unknown,
+): { mode: WorkMode; source: "structured" | "inferred" } {
+  if (typeof workplaceType === "string") {
+    const v = workplaceType.toLowerCase();
+    if (v.includes("remote")) return { mode: "remote", source: "structured" };
+    if (v.includes("hybrid")) return { mode: "hybrid", source: "structured" };
+    if (/on-?site|in.office/.test(v))
+      return { mode: "onsite", source: "structured" };
+  }
+  // isRemote is a positive-only signal: false doesn't distinguish hybrid from onsite.
+  if (isRemote === true) return { mode: "remote", source: "structured" };
+  return { mode: null, source: "inferred" };
+}
+
+export async function fetchAshby(site: Site): Promise<FetchedJob[]> {
   const slug = site.ashby_slug || site.slug;
   const board = await getJson<{
     jobs?: Array<{
@@ -49,6 +115,10 @@ export async function fetchAshby(site: Site): Promise<Job[]> {
       department?: string;
       location?: string | null;
       address?: { postalAddress?: string | null };
+      secondaryLocations?: unknown;
+      employmentType?: string;
+      workplaceType?: string;
+      isRemote?: boolean;
       publishedAt?: string | number;
       jobUrl?: string;
       applyUrl?: string;
@@ -56,33 +126,42 @@ export async function fetchAshby(site: Site): Promise<Job[]> {
       compensation?: { compensationTierSummary?: string } | string | null;
     }>;
   }>(`https://api.ashbyhq.com/posting-api/job-board/${slug}`);
-  return (board.jobs ?? []).map((j) =>
-    makeJob(site, String(j.id ?? ""), {
-      title: j.title,
+
+  return (board.jobs ?? []).map((j) => {
+    const wm = ashbyWorkMode(j.workplaceType, j.isRemote);
+    return makeFetchedJob({
+      sourceId: String(j.id ?? ""),
+      title: j.title ?? "",
       department: j.department ?? null,
       location: j.location ?? j.address?.postalAddress ?? null,
-      work_mode: null,
-      posted_date: isoDate(j.publishedAt),
+      secondaryLocations: j.secondaryLocations ?? null,
+      workMode: wm.mode,
+      workModeSource: wm.source,
+      employmentType: j.employmentType ?? null,
+      postedDate: isoDate(j.publishedAt),
       url: j.jobUrl ?? null,
-      apply_url: j.applyUrl ?? null,
-      description: htmlToText(j.descriptionHtml),
-      compensation:
+      applyUrl: j.applyUrl ?? null,
+      description: htmlToText(j.descriptionHtml ?? ""),
+      rawHtml: j.descriptionHtml ?? null,
+      compensationText:
         typeof j.compensation === "string"
           ? j.compensation
           : typeof j.compensation === "object" && j.compensation
             ? (j.compensation.compensationTierSummary ?? null)
             : null,
-    }),
-  );
+      rawJson: j,
+    });
+  });
 }
 
-// --- Greenhouse ----------------------------------------------------------
+// --- Greenhouse ------------------------------------------------------------
 
 const _WORK_MODE_NAME = /work|remote|hybrid|onsite|office|site/i;
 const _WORK_MODE_EXCLUDE =
   /position id|position number|req id|job id|cost center|team|department/i;
 const _WORK_MODE_VALUE = /remote|hybrid|on-?site|in office/i;
 
+/** No explicit workplace-type field exists on Greenhouse — this stays 'inferred'. */
 function workMode(metadata: unknown): WorkMode {
   const meta = Array.isArray(metadata) ? metadata : [];
   for (const m of meta) {
@@ -122,6 +201,9 @@ interface GreenhouseJob {
 interface GreenhouseDetail extends GreenhouseJob {
   content?: string;
   departments?: Array<{ name?: string }>;
+  requisition_id?: string;
+  first_published?: string;
+  application_deadline?: string;
 }
 
 function locName(v: unknown): string | null {
@@ -138,7 +220,15 @@ function locName(v: unknown): string | null {
   return typeof v === "string" ? v : null;
 }
 
-export async function fetchGreenhouse(site: Site, cap = 60): Promise<Job[]> {
+function deptPath(depts: Array<{ name?: string }> | undefined): string | null {
+  const names = (depts ?? []).map((d) => d.name).filter((n): n is string => !!n);
+  return names.length ? names.join(", ") : null;
+}
+
+export async function fetchGreenhouse(
+  site: Site,
+  cap = 60,
+): Promise<FetchedJob[]> {
   const slug = site.slug;
   const listing = await getJson<{ jobs?: GreenhouseJob[] }>(
     `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs`,
@@ -154,26 +244,51 @@ export async function fetchGreenhouse(site: Site, cap = 60): Promise<Job[]> {
   return listed.map((j, i) => {
     const detail = details[i] ?? ({} as GreenhouseDetail);
     const content = unescapeOnce(detail.content ?? "");
-    return makeJob(site, String(j.id ?? ""), {
-      title: j.title,
-      department:
-        detail.departments?.[0]?.name ?? j.departments?.[0]?.name ?? null,
+    const departments = detail.departments ?? j.departments;
+    return makeFetchedJob({
+      sourceId: String(j.id ?? ""),
+      title: j.title ?? "",
+      department: departments?.[0]?.name ?? null,
+      departmentPath: deptPath(departments),
       location: locName(j.location) ?? locName(detail.location),
-      work_mode: workMode(j.metadata),
-      posted_date: isoDate(detail.updated_at ?? j.updated_at),
+      workMode: workMode(j.metadata),
+      workModeSource: "inferred",
+      requisitionId: detail.requisition_id ?? null,
+      // first_published is the true "posted" date; updated_at drifts on every
+      // edit and is kept separately rather than conflated with posting date.
+      postedDate: isoDate(detail.first_published),
+      updatedAtSource: isoDate(detail.updated_at ?? j.updated_at),
+      applicationDeadline: isoDate(detail.application_deadline),
       url: j.absolute_url ?? detail.absolute_url ?? null,
-      apply_url:
+      applyUrl:
         ((j.absolute_url ?? "").replace("gh_jid", "gh_src") ||
           j.absolute_url) ??
         null,
       description: htmlToText(content),
+      rawHtml: content || null,
+      rawJson: { listing: j, detail },
     });
   });
 }
 
-// --- Lever ---------------------------------------------------------------
+// --- Lever -----------------------------------------------------------------
 
-export async function fetchLever(site: Site): Promise<Job[]> {
+/** Lever's own workplaceType field — structured, distinct from `commitment`
+ * (which is employment type, not work-site, and must never feed work_mode). */
+function leverWorkMode(v: unknown): {
+  mode: WorkMode;
+  source: "structured" | "inferred";
+} {
+  if (typeof v === "string") {
+    const lv = v.toLowerCase();
+    if (lv.includes("remote")) return { mode: "remote", source: "structured" };
+    if (lv.includes("hybrid")) return { mode: "hybrid", source: "structured" };
+    if (/on-?site/.test(lv)) return { mode: "onsite", source: "structured" };
+  }
+  return { mode: null, source: "inferred" };
+}
+
+export async function fetchLever(site: Site): Promise<FetchedJob[]> {
   const postings = await getJson<
     Array<{
       id?: string;
@@ -182,24 +297,37 @@ export async function fetchLever(site: Site): Promise<Job[]> {
       applyUrl?: string;
       createdAt?: string | number;
       descriptionPlain?: string;
-      categories?: { team?: string; location?: string; allLocations?: string };
+      workplaceType?: string;
+      categories?: {
+        team?: string;
+        location?: string;
+        allLocations?: string[];
+        commitment?: string;
+      };
     }>
   >(`https://api.lever.co/v0/postings/${site.slug}?mode=json`);
-  return postings.map((p) =>
-    makeJob(site, String(p.id ?? ""), {
-      title: p.text,
+
+  return postings.map((p) => {
+    const wm = leverWorkMode(p.workplaceType);
+    return makeFetchedJob({
+      sourceId: String(p.id ?? ""),
+      title: p.text ?? "",
       department: p.categories?.team ?? null,
-      location: p.categories?.location || p.categories?.allLocations || null,
-      work_mode: null,
-      posted_date: isoDate(p.createdAt),
+      location: p.categories?.location || null,
+      secondaryLocations: p.categories?.allLocations ?? null,
+      workMode: wm.mode,
+      workModeSource: wm.source,
+      employmentType: p.categories?.commitment ?? null,
+      postedDate: isoDate(p.createdAt),
       url: p.hostedUrl ?? null,
-      apply_url: p.applyUrl ?? null,
+      applyUrl: p.applyUrl ?? null,
       description: p.descriptionPlain || p.text || null,
-    }),
-  );
+      rawJson: p,
+    });
+  });
 }
 
-// --- Workday -------------------------------------------------------------
+// --- Workday -----------------------------------------------------------------
 
 interface WorkdayPosting {
   title?: string;
@@ -207,13 +335,23 @@ interface WorkdayPosting {
   jobFamily?: { title?: string };
   postedOn?: string;
   externalPath?: string;
+  bulletFields?: string[];
 }
 interface WorkdayDetail {
-  jobPostingInfo?: { jobDescription?: string | { externalContent?: string } };
+  jobPostingInfo?: {
+    jobDescription?: string | { externalContent?: string };
+    startDate?: string;
+    timeType?: string;
+    jobReqId?: string;
+    country?: { descriptor?: string };
+  };
   jobPosting?: { jobDescription?: string | { externalContent?: string } };
 }
 
-export async function fetchWorkday(site: Site, cap = 40): Promise<Job[]> {
+export async function fetchWorkday(
+  site: Site,
+  cap = 40,
+): Promise<FetchedJob[]> {
   const { tenant, wd, site: wsite } = site.workday!;
   const base = `https://${tenant}.${wd}.myworkdayjobs.com/wday/cxs/${tenant}/${wsite}`;
   const rows: WorkdayPosting[] = [];
@@ -232,7 +370,7 @@ export async function fetchWorkday(site: Site, cap = 40): Promise<Job[]> {
     if (batch.length < 20) break;
     offset += 20;
   }
-  const listed = rows.slice(0, cap);
+  const listed = cap === NO_CAP ? rows : rows.slice(0, cap);
 
   const { results: details } = await pool(listed, 8, (p: WorkdayPosting) =>
     getJson<WorkdayDetail>(`${base}${p.externalPath ?? ""}`),
@@ -240,27 +378,41 @@ export async function fetchWorkday(site: Site, cap = 40): Promise<Job[]> {
 
   return listed.map((p, i) => {
     const detail = details[i] ?? {};
-    const posting = detail.jobPosting ?? detail.jobPostingInfo ?? {};
+    const info = detail.jobPostingInfo;
+    const posting = info ?? detail.jobPosting ?? {};
     let descHtml = posting.jobDescription ?? "";
     if (typeof descHtml === "object") descHtml = descHtml.externalContent ?? "";
-    const jid = (p.externalPath ?? "").split("/").pop() ?? "";
+    // bulletFields[0] is the requisition id on the listing; jobReqId confirms
+    // it on the detail payload — prefer the detail when both are present.
+    const jid = info?.jobReqId ?? p.bulletFields?.[0] ?? "";
+    const sourceId = jid || (p.externalPath ?? "").split("/").pop() || "";
     const publicUrl = `https://${tenant}.${wd}.myworkdayjobs.com/en-US/${wsite}${p.externalPath ?? ""}`;
-    return makeJob(site, jid, {
-      title: p.title,
+    return makeFetchedJob({
+      sourceId,
+      title: p.title ?? "",
       department: p.jobFamily?.title ?? null,
       location: p.locationsText ?? null,
-      work_mode: null,
-      posted_date: isoDate(p.postedOn),
+      requisitionId: jid || null,
+      employmentType: info?.timeType ?? null,
+      // startDate on the detail payload is a real ISO date; the listing's
+      // postedOn ("Posted Today"/"Posted 30+ Days Ago") is relative text and
+      // deliberately never parsed as a date.
+      postedDate: isoDate(info?.startDate),
       url: publicUrl,
-      apply_url: publicUrl,
+      applyUrl: publicUrl,
       description: htmlToText(descHtml as string),
+      rawHtml: (descHtml as string) || null,
+      rawJson: { listing: p, detail },
     });
   });
 }
 
-// --- Apple ---------------------------------------------------------------
+// --- Apple -------------------------------------------------------------------
 
-export async function fetchApple(site: Site, cap = 50): Promise<Job[]> {
+export async function fetchApple(
+  site: Site,
+  cap = 50,
+): Promise<FetchedJob[]> {
   const url = "https://jobs.apple.com/api/v1/search";
 
   async function page(n: number): Promise<{
@@ -298,6 +450,7 @@ export async function fetchApple(site: Site, cap = 50): Promise<Job[]> {
     locationName?: string;
     transformedPostingTitle?: string;
     postDateInGMT?: string;
+    homeOffice?: boolean;
   }
 
   const rows: AppleRow[] = [];
@@ -309,7 +462,7 @@ export async function fetchApple(site: Site, cap = 50): Promise<Job[]> {
     total = d.res?.totalRecords ?? total;
     if (!batch.length) break;
     rows.push(...batch);
-    if (cap && rows.length >= cap) {
+    if (cap !== NO_CAP && rows.length >= cap) {
       rows.length = cap;
       break;
     }
@@ -376,6 +529,7 @@ export async function fetchApple(site: Site, cap = 50): Promise<Job[]> {
           minimumQualifications?: string;
           preferredQualifications?: string;
           postDateInGMT?: string;
+          employmentType?: string;
         })
       | undefined;
     const jnum = String(pid).startsWith("PIPE-") ? String(pid).slice(5) : pid;
@@ -390,25 +544,31 @@ export async function fetchApple(site: Site, cap = 50): Promise<Job[]> {
     ]
       .filter((x): x is string => !!x)
       .map((x) => x.trim());
-    return makeJob(site, String(pid), {
-      title: (r.postingTitle ?? r.title ?? "").trim() || undefined,
+    // homeOffice is Apple's own remote-eligibility flag — structured, not guessed.
+    const wm: WorkMode = r.homeOffice === true ? "remote" : null;
+    return makeFetchedJob({
+      sourceId: String(pid),
+      title: r.postingTitle ?? r.title ?? "",
       department: team.teamName ?? team.name ?? r.teamName ?? null,
       location: loc.fullLocation ?? loc.name ?? r.locationName ?? null,
-      work_mode: null,
-      posted_date: isoDate(jd?.postDateInGMT ?? r.postDateInGMT),
+      workMode: wm,
+      workModeSource: wm ? "structured" : "inferred",
+      employmentType: jd?.employmentType ?? null,
+      postedDate: isoDate(jd?.postDateInGMT ?? r.postDateInGMT),
       url: u,
-      apply_url: u,
+      applyUrl: u,
       description: parts.length ? parts.join("\n\n") : null,
+      rawJson: { listing: r, detail: jd ?? null },
     });
   });
 }
 
-// --- SmartRecruiters -----------------------------------------------------
+// --- SmartRecruiters ---------------------------------------------------------
 
 export async function fetchSmartRecruiters(
   site: Site,
   cap = 60,
-): Promise<Job[]> {
+): Promise<FetchedJob[]> {
   const slug = site.slug;
   const rows: Array<Record<string, unknown>> = [];
   let offset = 0;
@@ -418,13 +578,14 @@ export async function fetchSmartRecruiters(
     );
     const batch = resp.content ?? [];
     rows.push(...batch);
-    if (rows.length >= cap) break;
+    if (cap !== NO_CAP && rows.length >= cap) break;
     if (batch.length < 100) break;
     offset += 100;
   }
+  const listed = cap === NO_CAP ? rows : rows.slice(0, cap);
 
   const { results: details } = await pool(
-    rows.slice(0, cap),
+    listed,
     8,
     (p: Record<string, unknown>) =>
       getJson<Record<string, unknown>>(
@@ -432,7 +593,7 @@ export async function fetchSmartRecruiters(
       ),
   );
 
-  return rows.slice(0, cap).map((p, i) => {
+  return listed.map((p, i) => {
     const detail = details[i] ?? ({} as Record<string, unknown>);
     const ja = (detail.jobAd ?? {}) as {
       sections?: Record<string, { text?: string }>;
@@ -442,12 +603,17 @@ export async function fetchSmartRecruiters(
       .map((k) => secs[k]?.text ?? "")
       .filter((t) => t);
     const loc = (p.location ?? {}) as Record<string, unknown>;
+    // remote/hybrid are explicit booleans on SmartRecruiters — structured, not guessed.
     let wm: WorkMode = null;
     if (loc.remote) wm = "remote";
     else if (loc.hybrid) wm = "hybrid";
     const url = (detail.postingUrl ?? detail.applyUrl ?? p.ref) as string;
-    return makeJob(site, String(p.id ?? ""), {
-      title: (p.name as string) ?? undefined,
+    const typeOfEmployment = (detail.typeOfEmployment ?? p.typeOfEmployment) as
+      | { label?: string }
+      | undefined;
+    return makeFetchedJob({
+      sourceId: String(p.id ?? ""),
+      title: (p.name as string) ?? "",
       department:
         (p.department as { label?: string })?.label ??
         (p.function as { label?: string })?.label ??
@@ -455,18 +621,22 @@ export async function fetchSmartRecruiters(
       location:
         (loc.fullLocation as string) ??
         ([loc.city, loc.region].filter(Boolean).join(", ") || null),
-      work_mode: wm,
-      posted_date: isoDate(p.releasedDate ?? detail.releasedDate),
+      workMode: wm,
+      workModeSource: "structured",
+      employmentType: typeOfEmployment?.label ?? null,
+      requisitionId: (p.refNumber as string) ?? null,
+      postedDate: isoDate(p.releasedDate ?? detail.releasedDate),
       url,
-      apply_url: (detail.applyUrl as string) || url,
+      applyUrl: (detail.applyUrl as string) || url,
       description: parts.length ? parts.map(htmlToText).join("\n\n") : null,
+      rawJson: { listing: p, detail },
     });
   });
 }
 
-// --- Roblox --------------------------------------------------------------
+// --- Roblox ------------------------------------------------------------------
 
-export async function fetchRoblox(site: Site): Promise<Job[]> {
+export async function fetchRoblox(): Promise<FetchedJob[]> {
   const feed = await getJson<
     Array<{
       id?: string | number;
@@ -478,21 +648,20 @@ export async function fetchRoblox(site: Site): Promise<Job[]> {
   >("https://d32kbl9jppd7az.cloudfront.net/careers/jobs.json");
   return feed.map((j) => {
     const url = `https://careers.roblox.com/jobs/${j.id}`;
-    return makeJob(site, String(j.id ?? ""), {
-      title: j.title,
+    return makeFetchedJob({
+      sourceId: String(j.id ?? ""),
+      title: j.title ?? "",
       department:
         (j.groups ?? []).join(", ") || (j.department ?? []).join(", ") || null,
       location: j.location ?? null,
-      work_mode: null,
-      posted_date: null,
       url,
-      apply_url: url,
-      description: null,
+      applyUrl: url,
+      rawJson: j,
     });
   });
 }
 
-// --- HiringCafe (HTML/SSR + JSON-LD scraping) ---------------------------
+// --- HiringCafe (HTML/SSR + JSON-LD scraping) --------------------------------
 
 function ldJsonBlocks(html: string): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
@@ -508,22 +677,43 @@ function ldJsonBlocks(html: string): Array<Record<string, unknown>> {
   return out;
 }
 
-function parseHiringCafeDetail(page: string): Record<string, string | null> {
-  const out: Record<string, string | null> = {
+interface HiringCafeParsed {
+  title: string | null;
+  description: string | null;
+  company: string | null;
+  location: string | null;
+  posted_date: string | null;
+  salary_text: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+  apply_url: string | null;
+  work_mode: string | null;
+  employment_type: string | null;
+  raw_ld: Record<string, unknown> | null;
+}
+
+function parseHiringCafeDetail(page: string): HiringCafeParsed {
+  const out: HiringCafeParsed = {
     title: null,
     description: null,
     company: null,
     location: null,
     posted_date: null,
     salary_text: null,
+    salary_min: null,
+    salary_max: null,
+    salary_currency: null,
     apply_url: null,
     work_mode: null,
-    commitment: null,
+    employment_type: null,
+    raw_ld: null,
   };
   const jd = ldJsonBlocks(page).find((o) => o["@type"] === "JobPosting") as
     | (Record<string, unknown> & {
         hiringOrganization?: { name?: string };
         jobLocation?: { address?: Record<string, unknown> };
+        employmentType?: string;
         baseSalary?: {
           currency?: string;
           value?: { minValue?: unknown; maxValue?: unknown };
@@ -531,9 +721,11 @@ function parseHiringCafeDetail(page: string): Record<string, string | null> {
       })
     | undefined;
   if (jd) {
+    out.raw_ld = jd;
     out.title = jd.title ? String(jd.title) : null;
     out.company = jd.hiringOrganization?.name ?? null;
     out.posted_date = isoDate(jd.datePosted);
+    out.employment_type = jd.employmentType ?? null;
     out.description = jd.description
       ? htmlToText(String(jd.description))
       : null;
@@ -543,9 +735,16 @@ function parseHiringCafeDetail(page: string): Record<string, string | null> {
         .filter((x) => x)
         .join(", ") || null;
     const val = jd.baseSalary?.value ?? {};
-    if (val.minValue || val.maxValue) {
+    // schema.org baseSalary is structured JSON-LD, not free text — safe to
+    // parse as numbers directly (unlike a prose "$150k-200k" summary elsewhere).
+    const min = Number(val.minValue);
+    const max = Number(val.maxValue);
+    if (Number.isFinite(min) || Number.isFinite(max)) {
+      out.salary_min = Number.isFinite(min) ? min : null;
+      out.salary_max = Number.isFinite(max) ? max : null;
+      out.salary_currency = jd.baseSalary?.currency ?? null;
       out.salary_text =
-        `${val.minValue}-${val.maxValue} ${jd.baseSalary?.currency ?? ""}`.trim();
+        `${val.minValue ?? "?"}-${val.maxValue ?? "?"} ${jd.baseSalary?.currency ?? ""}`.trim();
     }
   }
   const am = /"apply_url":"([^"]+)"/.exec(page);
@@ -563,14 +762,16 @@ function parseHiringCafeDetail(page: string): Record<string, string | null> {
         ["remote", "hybrid", "onsite"].includes(toks[0].toLowerCase())
       )
         out.work_mode = toks[0].toLowerCase();
-      if (toks.length >= 2) out.commitment = toks[1];
       if (toks.length >= 3 && !out.salary_text) out.salary_text = toks[2];
     }
   }
   return out;
 }
 
-export async function fetchHiringCafe(site: Site, cap = 30): Promise<Job[]> {
+export async function fetchHiringCafe(
+  site: Site,
+  cap = 30,
+): Promise<FetchedJob[]> {
   const base = "https://hiringcafe.com";
   const queries = site.search_queries ?? ["software engineer new grad"];
   const slugs: string[] = [];
@@ -586,7 +787,7 @@ export async function fetchHiringCafe(site: Site, cap = 30): Promise<Job[]> {
       /* skip query */
     }
   }
-  const todo = slugs.slice(0, cap);
+  const todo = cap === NO_CAP ? slugs : slugs.slice(0, cap);
   if (!todo.length) return [];
 
   const { results } = await pool(todo, 3, async (slug: string) => {
@@ -594,33 +795,39 @@ export async function fetchHiringCafe(site: Site, cap = 30): Promise<Job[]> {
     return parseHiringCafeDetail(html);
   });
 
-  const jobs: Job[] = [];
+  const jobs: FetchedJob[] = [];
   todo.forEach((slug, i) => {
     const d = results[i];
     if (!d || !d.title) return;
+    // work_mode here comes from a regex over the meta description ("Remote,
+    // Full-time, $150k") — structurally weaker than the JSON-LD fields above,
+    // so it stays 'inferred' even though salary/employmentType are structured.
     jobs.push(
-      makeJob(site, slug.includes("-") ? slug.split("-").pop()! : slug, {
-        title: d.title,
-        department: null,
+      makeFetchedJob({
+        sourceId: slug.includes("-") ? slug.split("-").pop()! : slug,
+        title: d.title ?? "",
         location: d.location,
-        work_mode: d.work_mode as WorkMode,
-        posted_date: d.posted_date,
+        workMode: d.work_mode as WorkMode,
+        workModeSource: "inferred",
+        employmentType: d.employment_type,
+        postedDate: d.posted_date,
         url: `${base}/job/${slug}`,
-        apply_url: d.apply_url || `${base}/job/${slug}`,
+        applyUrl: d.apply_url || `${base}/job/${slug}`,
         description: d.description,
-        compensation: d.salary_text,
+        compensationText: d.salary_text,
+        salaryMin: d.salary_min,
+        salaryMax: d.salary_max,
+        salaryCurrency: d.salary_currency,
+        rawJson: d.raw_ld ?? d,
       }),
     );
   });
   return jobs;
 }
 
-export type Fetcher = (site: Site) => Promise<Job[]>;
+export type Fetcher = (site: Site, cap?: number) => Promise<FetchedJob[]>;
 
-export const FETCHERS: Record<
-  string,
-  (site: Site, cap?: number) => Promise<Job[]>
-> = {
+export const FETCHERS: Record<string, Fetcher> = {
   ashby: fetchAshby,
   greenhouse: fetchGreenhouse,
   lever: fetchLever,
@@ -630,3 +837,7 @@ export const FETCHERS: Record<
   roblox: fetchRoblox,
   hiringcafe: fetchHiringCafe,
 };
+
+/** Sentinel cap meaning "fetch the complete listing" — used by the sync engine;
+ * interactive callers pass a finite cap (or nothing, for each fetcher's default). */
+export const FULL_SYNC_CAP = NO_CAP;

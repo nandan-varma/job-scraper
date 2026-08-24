@@ -1,0 +1,101 @@
+name: Sync jobs
+
+# Runs every 20 minutes; each invocation only touches sites whose
+# sync_state.next_due_at has passed (tier 1 ~45min, tier 2 ~6h, tier 3
+# ~24h+backoff — see scripts/sync.ts), so most runs are cheap no-ops for
+# most platforms. One matrix job per platform so a slow/broken platform
+# (Apple/HiringCafe scraping, Workday's per-job detail fan-out) never
+# blocks the others.
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Single platform to sync (blank = all)"
+        required: false
+        type: choice
+        options:
+          - ""
+          - ashby
+          - greenhouse
+          - lever
+          - workday
+          - apple
+          - smartrecruiters
+          - roblox
+          - hiringcafe
+      force:
+        description: "Ignore next_due_at and sync anyway"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    if: github.event_name == 'schedule' || github.event.inputs.platform == '' || github.event.inputs.platform == null
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ashby
+            limit: 60
+            concurrency: 6
+          - platform: lever
+            limit: 60
+            concurrency: 6
+          - platform: greenhouse
+            limit: 40
+            concurrency: 5
+          - platform: smartrecruiters
+            limit: 30
+            concurrency: 5
+          - platform: workday
+            limit: 15
+            concurrency: 3
+          - platform: apple
+            limit: 5
+            concurrency: 2
+          - platform: roblox
+            limit: 5
+            concurrency: 2
+          - platform: hiringcafe
+            limit: 5
+            concurrency: 2
+    runs-on: ubuntu-latest
+    concurrency:
+      group: sync-${{ matrix.platform }}
+      cancel-in-progress: false
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: >
+          npx tsx scripts/sync.ts
+          --platform=${{ matrix.platform }}
+          --limit=${{ matrix.limit }}
+          --concurrency=${{ matrix.concurrency }}
+
+  sync-one:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.platform != ''
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: >
+          npx tsx scripts/sync.ts
+          --platform=${{ github.event.inputs.platform }}
+          --limit=200
+          --concurrency=6
+          ${{ github.event.inputs.force == 'true' && '--force' || '' }}

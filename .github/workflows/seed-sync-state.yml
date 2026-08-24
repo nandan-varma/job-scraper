@@ -1,0 +1,22 @@
+name: Seed sync_state
+
+# Manual only — run after sites.ts changes (registry additions/regeneration)
+# to bring sync_state in sync. Safe to re-run any time: existing sites keep
+# their sync history, only tier/platform get refreshed. See
+# scripts/seed-sync-state.ts.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/seed-sync-state.ts

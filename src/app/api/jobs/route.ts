@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const payload = await fetchSites(slugs, force ? 8 : 12, force);
+  const payload = await fetchSites(slugs, force);
   const ok = payload.results.filter((r) => r.ok);
   const jobs = stableSort(ok.flatMap((r) => compactJobs(r.jobs)));
   const filtered = q ? jobs.filter((j) => matches(j, q)) : jobs;
