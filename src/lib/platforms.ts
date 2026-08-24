@@ -134,6 +134,9 @@ export function platformMeta(platform: string): PlatformMeta | undefined {
   return PLATFORM_META[platform];
 }
 
+/** Every supported job-provider platform, in display order. */
+export const ALL_PROVIDERS = Object.keys(PLATFORM_META);
+
 /** A single field's availability over a loaded job set. */
 export interface FieldCoverage {
   available: number;

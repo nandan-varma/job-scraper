@@ -12,11 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Job } from "@/lib/types";
 import { FEATURED } from "@/lib/featured";
-import {
-  fetchJobs,
-  fetchJobDetail,
-  fetchSitesRegistry,
-} from "@/lib/api-client";
+import { fetchJobs, fetchJobDetail } from "@/lib/api-client";
 import { normalizeQuery, dedupeJobs } from "@/lib/format";
 import { computeCoverage, platformFacets } from "@/lib/platforms";
 import { Button } from "@/components/ui/button";
@@ -53,9 +49,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [registry, setRegistry] = useState<
-    Array<{ slug: string; name: string; platform: string }>
-  >([]);
   const [loadingSlugs, setLoadingSlugs] = useState<Set<string>>(new Set());
   const [commandOpen, setCommandOpen] = useState(false);
 
@@ -68,13 +61,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
 
   // Debounced search — the expensive filter/sort runs only after typing stops.
   const debouncedQuery = useDebouncedValue(filters.query, 250);
-
-  // Load the site registry (for the company picker) once.
-  useEffect(() => {
-    fetchSitesRegistry()
-      .then((r) => setRegistry(r.sites))
-      .catch(() => {});
-  }, []);
 
   const loadSites = useCallback(
     async (
@@ -100,10 +86,9 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
           setLoadingSlugs((prev) => new Set([...prev, ...chunk]));
           try {
             const data = await fetchJobs({ sites: chunk, fresh: force });
-            const added = data.results.flatMap((r) => (r.ok ? r.jobs : []));
-            totalAdded += added.length;
+            totalAdded += data.jobs.length;
             failed += data.sites_failed;
-            setJobs((prev) => dedupeJobs([...prev, ...added]));
+            setJobs((prev) => dedupeJobs([...prev, ...data.jobs]));
             setLoadedSlugs((prev) => {
               const next = new Set(prev);
               chunk.forEach((s) => next.add(s));
@@ -157,14 +142,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     [loadSites, loadedSlugs],
   );
 
-  const loadAll = useCallback(() => {
-    void loadSites(
-      registry.map((s) => s.slug),
-      true,
-      12,
-    );
-  }, [loadSites, registry]);
-
   const refresh = useCallback(() => {
     const slugs = [...loadedSlugs];
     setJobs([]);
@@ -185,12 +162,12 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
         return false;
       if (filters.companies.size && !filters.companies.has(j.site))
         return false;
+      if (filters.providers.size && !filters.providers.has(j.platform))
+        return false;
       if (
         filters.departments.size &&
         !filters.departments.has(j.department ?? "")
       )
-        return false;
-      if (filters.platforms.size && !filters.platforms.has(j.platform))
         return false;
       if (filters.salary === "has" && !j.compensation) return false;
       if (filters.salary === "none" && j.compensation) return false;
@@ -235,11 +212,8 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
   const coverage = useMemo(() => computeCoverage(jobs), [jobs]);
   const platforms = useMemo(() => platformFacets(jobs), [jobs]);
 
-  // Paginate: reset the window whenever the query/filters change. Adjust
-  // state during render (guarded) per React's recommended reset pattern — no
-  // effect needed, so the reset is committed in the same pass as the filter
-  // change that triggered it.
-  const paginationKey = `${debouncedQuery}|${filters.workMode}|${filters.sort}|${filters.companies.size}|${filters.departments.size}|${filters.platforms.size}|${filters.salary}`;
+  // Paginate: reset the window whenever the query/filters change.
+  const paginationKey = `${debouncedQuery}|${filters.workMode}|${filters.sort}|${filters.companies.size}|${filters.departments.size}|${filters.providers.size}|${filters.salary}`;
   const [lastPaginationKey, setLastPaginationKey] = useState(paginationKey);
   if (paginationKey !== lastPaginationKey) {
     setLastPaginationKey(paginationKey);
@@ -272,7 +246,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     setVisibleCount((v) => Math.min(v + LOAD_MORE_STEP, filtered.length));
   }, [filtered.length]);
 
-  // The selected job with any fetched full detail merged in.
   const selected = useMemo(() => {
     const base = jobs.find((j) => j.id === selectedId) ?? null;
     if (!base) return null;
@@ -283,7 +256,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     (job: Job) => {
       setSelectedId(job.id);
       if (job.hasDescription && !detailsCache[job.id]) {
-        // Fetch the full description on demand (the list carries compact items).
         setDetailLoading(true);
         fetchJobDetail(job.site, job.source_id)
           .then((full) => {
@@ -306,7 +278,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
     filters.departments.size > 0 ||
-    filters.platforms.size > 0 ||
     filters.salary !== "all";
 
   const showMore = visibleCount < filtered.length;
@@ -359,29 +330,12 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
                 />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={loadAll}
-                disabled={loading || registry.length === 0}
-              >
-                {loading ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="size-3.5" />
-                )}
-                <span className="hidden sm:inline">
-                  Load all {registry.length} companies
-                </span>
-                <span className="sm:hidden">Load all</span>
-              </Button>
             </div>
           </div>
           <div className="mt-3">
             <FiltersBar
               filters={filters}
               onChange={setFilters}
-              sites={registry}
               loadedSlugs={loadedSlugs}
               onToggleCompany={toggleCompany}
               departments={departments}
@@ -438,7 +392,6 @@ export function JobBrowser({ initialJobs, initialLoaded }: Props) {
                   )}
                 </div>
               )}
-              {/* Infinite-scroll sentinel */}
               {showMore && (
                 <div ref={sentinelRef} aria-hidden className="h-px" />
               )}

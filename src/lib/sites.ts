@@ -40812,5 +40812,2315 @@ export const SITES: Site[] = [
   "slug": "tsmg",
   "name": "TSMG",
   "platform": "lever"
+ },
+ {
+  "slug": "Ubisoft2",
+  "name": "Ubisoft2",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "PeopleCanFly",
+  "name": "People Can Fly",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "CDPROJEKTRED",
+  "name": "CDPROJEKTRED",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "vizexperts",
+  "name": "Vizexperts",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "flaanaa",
+  "name": "Flaanaa",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "bytedance",
+  "name": "Bytedance",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "gamecloudtechnologiespvtltd",
+  "name": "Gamecloudtechnologiespvtltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "xiaomiindia",
+  "name": "Xiaomiindia",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "valuelabs",
+  "name": "Valuelabs",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "DONTNOD",
+  "name": "DONTNOD",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "TheMill2",
+  "name": "The Mill2",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "softsuavetechnologies",
+  "name": "Softsuavetechnologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "datastaffinc",
+  "name": "Datastaffinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "miratech1",
+  "name": "Miratech1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "gloify",
+  "name": "Gloify",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "namely",
+  "name": "Namely",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "keylentinc",
+  "name": "Keylentinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "intersourcesinc",
+  "name": "Intersourcesinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Gameloft",
+  "name": "Gameloft",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "OldSkullGames1",
+  "name": "Old Skull Games1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "TechlandSA",
+  "name": "Techland SA",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ewargames",
+  "name": "Ewargames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Evolution",
+  "name": "Evolution",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "symphonyai",
+  "name": "Symphonyai",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "DOTSOFTSA",
+  "name": "DOTSOFTSA",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "tatsuworks",
+  "name": "Tatsuworks",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "synergyresourcesolutions",
+  "name": "Synergyresourcesolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "WildBrain",
+  "name": "Wild Brain",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "HoYoverse",
+  "name": "Ho Yoverse",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "loft17visuals",
+  "name": "Loft17visuals",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "blueislestudios",
+  "name": "Blueislestudios",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "FunGuyStudioPhilippinesInc",
+  "name": "Fun Guy Studio Philippines Inc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "a44games",
+  "name": "A44games",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "dxmindsinnovationlabspvtltd",
+  "name": "Dxmindsinnovationlabspvtltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "10times",
+  "name": "10times",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Game5Mobile",
+  "name": "Game5 Mobile",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "gearinc",
+  "name": "Gearinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Playtech",
+  "name": "Playtech",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Arrible",
+  "name": "Arrible",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "playwing",
+  "name": "Playwing",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "realitygames",
+  "name": "Realitygames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "GIANTSSoftwareGmbH",
+  "name": "GIANTS Software Gmb H",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Alegrium1",
+  "name": "Alegrium1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "UntoldTalesSA",
+  "name": "Untold Tales SA",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "GluckGames",
+  "name": "Gluck Games",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "TonicDNA1",
+  "name": "Tonic DNA1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "FireHoseGames",
+  "name": "Fire Hose Games",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "RedPointLabs",
+  "name": "Red Point Labs",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "GamesForLove",
+  "name": "Games For Love",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "epochgames",
+  "name": "Epochgames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "MixMob",
+  "name": "Mix Mob",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "lumengames",
+  "name": "Lumengames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "K-group1",
+  "name": "K Group1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "YggdrasilSandbox",
+  "name": "Yggdrasil Sandbox",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "KnackStudios",
+  "name": "Knack Studios",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "arthrex",
+  "name": "Arthrex",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Arkavis",
+  "name": "Arkavis",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "MattelInc",
+  "name": "Mattel Inc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Ten4",
+  "name": "Ten4",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "k-group1",
+  "name": "K Group1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "themill2",
+  "name": "Themill2",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "federalsoftsystemsinc",
+  "name": "Federalsoftsystemsinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "AirlabInc",
+  "name": "Airlab Inc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "talentfolks",
+  "name": "Talentfolks",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "advantagesolutions",
+  "name": "Advantagesolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Blockville",
+  "name": "Blockville",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "futransolutions",
+  "name": "Futransolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "loral",
+  "name": "Loral",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "boschgroup",
+  "name": "Boschgroup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "jsheldllc",
+  "name": "Jsheldllc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "vmdcorp",
+  "name": "Vmdcorp",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "chimeratechnologies",
+  "name": "Chimeratechnologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "caci",
+  "name": "Caci",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "comcastcorporation",
+  "name": "Comcastcorporation",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "mgmresortsinternational",
+  "name": "Mgmresortsinternational",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "alphamedia",
+  "name": "Alphamedia",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "essilorluxottica",
+  "name": "Essilorluxottica",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "galaxesolutions",
+  "name": "Galaxesolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "geico",
+  "name": "Geico",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "whizzhr",
+  "name": "Whizzhr",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "unifynd",
+  "name": "Unifynd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "SegulaTechnologies",
+  "name": "Segula Technologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "missionboxsolutions",
+  "name": "Missionboxsolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "bcforward",
+  "name": "Bcforward",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "freshboxmediapvtltd",
+  "name": "Freshboxmediapvtltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "pacificacontinental",
+  "name": "Pacificacontinental",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ursusinc",
+  "name": "Ursusinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "agileengine",
+  "name": "Agileengine",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "rdsdigital",
+  "name": "Rdsdigital",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "skeletonkey",
+  "name": "Skeletonkey",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "experthiring",
+  "name": "Experthiring",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "talentsocio",
+  "name": "Talentsocio",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "avacendinc",
+  "name": "Avacendinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "starmarketing",
+  "name": "Starmarketing",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "newscorp",
+  "name": "Newscorp",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "iodigital",
+  "name": "Iodigital",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "beyondinc",
+  "name": "Beyondinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "novomatictechnologiespoland",
+  "name": "Novomatictechnologiespoland",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "drpanda",
+  "name": "Drpanda",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "innovecs",
+  "name": "Innovecs",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "wayup",
+  "name": "Wayup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "lincolndigitalgroup",
+  "name": "Lincolndigitalgroup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "vysystems",
+  "name": "Vysystems",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "accor",
+  "name": "Accor",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "oxbridgeinternationalschool",
+  "name": "Oxbridgeinternationalschool",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "linkedin3",
+  "name": "Linkedin3",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "freshworks",
+  "name": "Freshworks",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "NielsenIQ",
+  "name": "Nielsen IQ",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "believe",
+  "name": "Believe",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "kantegroup",
+  "name": "Kantegroup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "locumtenenscom",
+  "name": "Locumtenenscom",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "skyrocketventures",
+  "name": "Skyrocketventures",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "bookerdimaio",
+  "name": "Bookerdimaio",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "veremark",
+  "name": "Veremark",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "espressifsystems",
+  "name": "Espressifsystems",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "levelall",
+  "name": "Levelall",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "purview",
+  "name": "Purview",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Experian",
+  "name": "Experian",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "alten",
+  "name": "Alten",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "accuratebackground",
+  "name": "Accuratebackground",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "WesternDigital",
+  "name": "Western Digital",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "elevatek-12",
+  "name": "Elevatek 12",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "netradyne",
+  "name": "Netradyne",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "cityofphiladelphia",
+  "name": "Cityofphiladelphia",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Sportradar",
+  "name": "Sportradar",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "devoteam",
+  "name": "Devoteam",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Nagarro1",
+  "name": "Nagarro1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "resmed",
+  "name": "Resmed",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "teampumpkin",
+  "name": "Teampumpkin",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "starkflow",
+  "name": "Starkflow",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "blackkitestudios",
+  "name": "Blackkitestudios",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "secondtalent",
+  "name": "Secondtalent",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "lecollectionist",
+  "name": "Lecollectionist",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "creativecoveinc",
+  "name": "Creativecoveinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "adiresourcing",
+  "name": "Adiresourcing",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "mnrsolutionspvtltd",
+  "name": "Mnrsolutionspvtltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "babilgames",
+  "name": "Babilgames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "blocresources",
+  "name": "Blocresources",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "howardhannarealestateservices",
+  "name": "Howardhannarealestateservices",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "talentsoftwareservices",
+  "name": "Talentsoftwareservices",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "buckeyebroadband",
+  "name": "Buckeyebroadband",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "acldigital",
+  "name": "Acldigital",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "talentxo",
+  "name": "Talentxo",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "futuremug",
+  "name": "Futuremug",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "mottmacdonald",
+  "name": "Mottmacdonald",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "fourseasonshotelsandresorts",
+  "name": "Fourseasonshotelsandresorts",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "hackajob",
+  "name": "Hackajob",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "personiv",
+  "name": "Personiv",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "agency09",
+  "name": "Agency09",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "kenvue",
+  "name": "Kenvue",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "informicasolutions",
+  "name": "Informicasolutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "rebelfoods",
+  "name": "Rebelfoods",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "uber",
+  "name": "Uber",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "continental",
+  "name": "Continental",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "aristanetworks",
+  "name": "Aristanetworks",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "mpowerfinancing",
+  "name": "Mpowerfinancing",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "applicantz",
+  "name": "Applicantz",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "lonza",
+  "name": "Lonza",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "atidantechnologies",
+  "name": "Atidantechnologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "adpushup",
+  "name": "Adpushup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "renesaselectronics",
+  "name": "Renesaselectronics",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "whatfix",
+  "name": "Whatfix",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "springernature",
+  "name": "Springernature",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "evsinc",
+  "name": "Evsinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "kodo",
+  "name": "Kodo",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "harbingergroup",
+  "name": "Harbingergroup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "kovaico",
+  "name": "Kovaico",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Version1",
+  "name": "Version1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "pharmaace",
+  "name": "Pharmaace",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ASSYSTEM",
+  "name": "ASSYSTEM",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "NextLevelBusinessServicesInc2",
+  "name": "Next Level Business Services Inc2",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "HitachiSolutions",
+  "name": "Hitachi Solutions",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "sigmasoftware2",
+  "name": "Sigmasoftware2",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "AxelSpringerNewsMediaNational",
+  "name": "Axel Springer News Media National",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "NBCUniversal3",
+  "name": "NBC Universal3",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "EttainGroup",
+  "name": "Ettain Group",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "GMSServices",
+  "name": "GMS Services",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "RedPoints1",
+  "name": "Red Points1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "AmvaDev1",
+  "name": "Amva Dev1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "T-SystemsICTIndiaPvtLtd1",
+  "name": "T Systems ICT India Pvt Ltd1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "BuildstaffInc",
+  "name": "Buildstaff Inc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Recruitrix",
+  "name": "Recruitrix",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Bitlane",
+  "name": "Bitlane",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Filmless",
+  "name": "Filmless",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Volksbyte",
+  "name": "Volksbyte",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ValU1",
+  "name": "Val U1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Divensi1",
+  "name": "Divensi1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "BRAINHUNTER",
+  "name": "BRAINHUNTER",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "AFRY",
+  "name": "AFRY",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "McDonaldsCorporation",
+  "name": "Mc Donalds Corporation",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "mcdonaldscorporation",
+  "name": "Mcdonaldscorporation",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "SyngentaGroup",
+  "name": "Syngenta Group",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Ramboll3",
+  "name": "Ramboll3",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "StoneSearch",
+  "name": "Stone Search",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Dungarvin",
+  "name": "Dungarvin",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ARHS",
+  "name": "ARHS",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "blend360",
+  "name": "Blend360",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "MovingWallsIndiaPvtLtd",
+  "name": "Moving Walls India Pvt Ltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "BaxEnergy",
+  "name": "Bax Energy",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Stratacent",
+  "name": "Stratacent",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Insightsoftware",
+  "name": "Insightsoftware",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "SikaAG",
+  "name": "Sika AG",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "wayfair",
+  "name": "Wayfair",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "interviewkickstart",
+  "name": "Interviewkickstart",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "caterpillarinc",
+  "name": "Caterpillarinc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "konecranes",
+  "name": "Konecranes",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "LLNL",
+  "name": "LLNL",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "kronospan",
+  "name": "Kronospan",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "jadeglobal",
+  "name": "Jadeglobal",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Canva",
+  "name": "Canva",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "revalsystechnologies",
+  "name": "Revalsystechnologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "assistsoftware",
+  "name": "Assistsoftware",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "exponentiaai",
+  "name": "Exponentiaai",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "inxiteout",
+  "name": "Inxiteout",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "speedlabs",
+  "name": "Speedlabs",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "intrepidstudios",
+  "name": "Intrepidstudios",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "BetaCraftTechnologies",
+  "name": "Beta Craft Technologies",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "fracturedbyte",
+  "name": "Fracturedbyte",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "techstargroup",
+  "name": "Techstargroup",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "play-perfect",
+  "name": "Play Perfect",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "MiracleSoftwareSystem1",
+  "name": "Miracle Software System1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ekosystem",
+  "name": "Ekosystem",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "TechVedika",
+  "name": "Tech Vedika",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "TechnorizenSoftwareSolution",
+  "name": "Technorizen Software Solution",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Grab",
+  "name": "Grab",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "bootloaderstudio",
+  "name": "Bootloaderstudio",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "abgames",
+  "name": "Abgames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "NvizzioCreations",
+  "name": "Nvizzio Creations",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "jammedia",
+  "name": "Jammedia",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "META4",
+  "name": "META4",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "GeneraGames1",
+  "name": "Genera Games1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Hive1",
+  "name": "Hive1",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "InformaGroupPlc",
+  "name": "Informa Group Plc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "FuturumTechnologyLtd",
+  "name": "Futurum Technology Ltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ClearPointRecruitment",
+  "name": "Clear Point Recruitment",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "Intelerad",
+  "name": "Intelerad",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "datatobiz",
+  "name": "Datatobiz",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "ryseupstudios",
+  "name": "Ryseupstudios",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "hardballgames",
+  "name": "Hardballgames",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "techarmyllc",
+  "name": "Techarmyllc",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "letsgetchecked",
+  "name": "Letsgetchecked",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "endava",
+  "name": "Endava",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "lottiefiles",
+  "name": "Lottiefiles",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "IntergalacticGamingLtd",
+  "name": "Intergalactic Gaming Ltd",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "movingpicturecompany",
+  "name": "Movingpicturecompany",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "govini",
+  "name": "Govini",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "sglottery",
+  "name": "Scientific Games",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sglottery",
+   "wd": "wd5",
+   "site": "ScientificGamesExternalCareers"
+  }
+ },
+ {
+  "slug": "unisys",
+  "name": "Unisys",
+  "platform": "workday",
+  "workday": {
+   "tenant": "unisys",
+   "wd": "wd5",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "tencent",
+  "name": "Tencent",
+  "platform": "workday",
+  "workday": {
+   "tenant": "tencent",
+   "wd": "wd1",
+   "site": "Tencent_Careers"
+  }
+ },
+ {
+  "slug": "lnw",
+  "name": "SciPlay",
+  "platform": "workday",
+  "workday": {
+   "tenant": "lnw",
+   "wd": "wd5",
+   "site": "SciPlayExternalCareersSite"
+  }
+ },
+ {
+  "slug": "eisneramper",
+  "name": "EisnerAmper\n",
+  "platform": "workday",
+  "workday": {
+   "tenant": "eisneramper",
+   "wd": "wd1",
+   "site": "EisnerAmper_External"
+  }
+ },
+ {
+  "slug": "warnerbros",
+  "name": "Rocksteady Studios",
+  "platform": "workday",
+  "workday": {
+   "tenant": "warnerbros",
+   "wd": "wd5",
+   "site": "global"
+  }
+ },
+ {
+  "slug": "forcepoint",
+  "name": "Forcepoint",
+  "platform": "workday",
+  "workday": {
+   "tenant": "forcepoint",
+   "wd": "wd1",
+   "site": "engineering-external-careers1"
+  }
+ },
+ {
+  "slug": "synechron",
+  "name": "Synechron",
+  "platform": "workday",
+  "workday": {
+   "tenant": "synechron",
+   "wd": "wd1",
+   "site": "SynechronCareers"
+  }
+ },
+ {
+  "slug": "broadcom",
+  "name": "broadcom",
+  "platform": "workday",
+  "workday": {
+   "tenant": "broadcom",
+   "wd": "wd1",
+   "site": "External_Career"
+  }
+ },
+ {
+  "slug": "illumina",
+  "name": "Illumina\n",
+  "platform": "workday",
+  "workday": {
+   "tenant": "illumina",
+   "wd": "wd1",
+   "site": "illumina-careers"
+  }
+ },
+ {
+  "slug": "wmeimg",
+  "name": "160over90",
+  "platform": "workday",
+  "workday": {
+   "tenant": "wmeimg",
+   "wd": "wd1",
+   "site": "160over90US"
+  }
+ },
+ {
+  "slug": "hp",
+  "name": "HP",
+  "platform": "workday",
+  "workday": {
+   "tenant": "hp",
+   "wd": "wd5",
+   "site": "ExternalCareerSite"
+  }
+ },
+ {
+  "slug": "autodesk",
+  "name": "Autodesk",
+  "platform": "workday",
+  "workday": {
+   "tenant": "autodesk",
+   "wd": "wd1",
+   "site": "Ext"
+  }
+ },
+ {
+  "slug": "umusic",
+  "name": "Universal Music Group",
+  "platform": "workday",
+  "workday": {
+   "tenant": "umusic",
+   "wd": "wd5",
+   "site": "UMGUS"
+  }
+ },
+ {
+  "slug": "transunion",
+  "name": "TransUnion",
+  "platform": "workday",
+  "workday": {
+   "tenant": "transunion",
+   "wd": "wd5",
+   "site": "TransUnion"
+  }
+ },
+ {
+  "slug": "ncr",
+  "name": "NCR Voyix",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ncr",
+   "wd": "wd1",
+   "site": "ext_apac"
+  }
+ },
+ {
+  "slug": "valeo",
+  "name": "Valeo",
+  "platform": "workday",
+  "workday": {
+   "tenant": "valeo",
+   "wd": "wd3",
+   "site": "valeo_jobs"
+  }
+ },
+ {
+  "slug": "ncratleos",
+  "name": "NCR Atleos",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ncratleos",
+   "wd": "wd1",
+   "site": "ext_apacatleos"
+  }
+ },
+ {
+  "slug": "optiv",
+  "name": "Optiv",
+  "platform": "workday",
+  "workday": {
+   "tenant": "optiv",
+   "wd": "wd5",
+   "site": "Optiv_Careers"
+  }
+ },
+ {
+  "slug": "dentsuaegis",
+  "name": "Dentsu",
+  "platform": "workday",
+  "workday": {
+   "tenant": "dentsuaegis",
+   "wd": "wd3",
+   "site": "DAN_GLOBAL"
+  }
+ },
+ {
+  "slug": "spe",
+  "name": "Sony Pictures Entertainment",
+  "platform": "workday",
+  "workday": {
+   "tenant": "spe",
+   "wd": "wd1",
+   "site": "SonyPicturesEntertainment"
+  }
+ },
+ {
+  "slug": "univision",
+  "name": "Univision",
+  "platform": "workday",
+  "workday": {
+   "tenant": "univision",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "tag",
+  "name": "TAG",
+  "platform": "workday",
+  "workday": {
+   "tenant": "tag",
+   "wd": "wd3",
+   "site": "Tag_Careers"
+  }
+ },
+ {
+  "slug": "fico",
+  "name": "FICO",
+  "platform": "workday",
+  "workday": {
+   "tenant": "fico",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "worldpay",
+  "name": "Worldpay",
+  "platform": "workday",
+  "workday": {
+   "tenant": "worldpay",
+   "wd": "wd5",
+   "site": "Worldpay_External_Careers_Site"
+  }
+ },
+ {
+  "slug": "philips",
+  "name": "Philips",
+  "platform": "workday",
+  "workday": {
+   "tenant": "philips",
+   "wd": "wd3",
+   "site": "jobs-and-careers"
+  }
+ },
+ {
+  "slug": "ouryahoo",
+  "name": "Yahoo",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ouryahoo",
+   "wd": "wd5",
+   "site": "careers"
+  }
+ },
+ {
+  "slug": "ansira",
+  "name": "ansira",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ansira",
+   "wd": "wd1",
+   "site": "Ansira_Careers"
+  }
+ },
+ {
+  "slug": "pwc",
+  "name": "PwC",
+  "platform": "workday",
+  "workday": {
+   "tenant": "pwc",
+   "wd": "wd3",
+   "site": "Global_Experienced_Careers"
+  }
+ },
+ {
+  "slug": "unilever",
+  "name": "Unilever",
+  "platform": "workday",
+  "workday": {
+   "tenant": "unilever",
+   "wd": "wd3",
+   "site": "Unilever_Experienced_Professionals"
+  }
+ },
+ {
+  "slug": "sabre",
+  "name": "Sabre India",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sabre",
+   "wd": "wd1",
+   "site": "SabreJobs"
+  }
+ },
+ {
+  "slug": "semtech",
+  "name": "Semtech",
+  "platform": "workday",
+  "workday": {
+   "tenant": "semtech",
+   "wd": "wd1",
+   "site": "SemtechCareers"
+  }
+ },
+ {
+  "slug": "cae",
+  "name": "CAE",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cae",
+   "wd": "wd3",
+   "site": "career"
+  }
+ },
+ {
+  "slug": "syniverse",
+  "name": "Syniverse",
+  "platform": "workday",
+  "workday": {
+   "tenant": "syniverse",
+   "wd": "wd1",
+   "site": "SyniverseCareers"
+  }
+ },
+ {
+  "slug": "plugpower",
+  "name": "Plug power",
+  "platform": "workday",
+  "workday": {
+   "tenant": "plugpower",
+   "wd": "wd5",
+   "site": "Plug_Power_Inc"
+  }
+ },
+ {
+  "slug": "lytx",
+  "name": "Lytx, Inc.",
+  "platform": "workday",
+  "workday": {
+   "tenant": "lytx",
+   "wd": "wd1",
+   "site": "Lytx"
+  }
+ },
+ {
+  "slug": "globalfoundries",
+  "name": "GlobalFoundries",
+  "platform": "workday",
+  "workday": {
+   "tenant": "globalfoundries",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "stem",
+  "name": "Stem, Inc.",
+  "platform": "workday",
+  "workday": {
+   "tenant": "stem",
+   "wd": "wd12",
+   "site": "steminc"
+  }
+ },
+ {
+  "slug": "trekbikes",
+  "name": "Trek",
+  "platform": "workday",
+  "workday": {
+   "tenant": "trekbikes",
+   "wd": "wd1",
+   "site": "TREK"
+  }
+ },
+ {
+  "slug": "pluralsight",
+  "name": "Pluralsight",
+  "platform": "workday",
+  "workday": {
+   "tenant": "pluralsight",
+   "wd": "wd1",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "clearwateranalytics",
+  "name": "Clearwater Analytics",
+  "platform": "workday",
+  "workday": {
+   "tenant": "clearwateranalytics",
+   "wd": "wd1",
+   "site": "Clearwater_Analytics_Careers"
+  }
+ },
+ {
+  "slug": "motorolasolutions",
+  "name": "Motorola solutions",
+  "platform": "workday",
+  "workday": {
+   "tenant": "motorolasolutions",
+   "wd": "wd5",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "tvh",
+  "name": "TVH",
+  "platform": "workday",
+  "workday": {
+   "tenant": "tvh",
+   "wd": "wd3",
+   "site": "JobsatTVH"
+  }
+ },
+ {
+  "slug": "adtran",
+  "name": "Adtran",
+  "platform": "workday",
+  "workday": {
+   "tenant": "adtran",
+   "wd": "wd3",
+   "site": "ADTRAN"
+  }
+ },
+ {
+  "slug": "mmc",
+  "name": "Marsh McLennan",
+  "platform": "workday",
+  "workday": {
+   "tenant": "mmc",
+   "wd": "wd1",
+   "site": "MMC"
+  }
+ },
+ {
+  "slug": "phinia",
+  "name": "PHINIA",
+  "platform": "workday",
+  "workday": {
+   "tenant": "phinia",
+   "wd": "wd5",
+   "site": "PHINIA_Careers"
+  }
+ },
+ {
+  "slug": "lexmark",
+  "name": "Lexmark",
+  "platform": "workday",
+  "workday": {
+   "tenant": "lexmark",
+   "wd": "wd1",
+   "site": "Lexmark"
+  }
+ },
+ {
+  "slug": "silabs",
+  "name": "Silicon Labs",
+  "platform": "workday",
+  "workday": {
+   "tenant": "silabs",
+   "wd": "wd1",
+   "site": "SiliconlabsCareers"
+  }
+ },
+ {
+  "slug": "issgovernance",
+  "name": "STOXX",
+  "platform": "workday",
+  "workday": {
+   "tenant": "issgovernance",
+   "wd": "wd1",
+   "site": "ISScareers"
+  }
+ },
+ {
+  "slug": "cubic",
+  "name": "Cubic corporation",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cubic",
+   "wd": "wd1",
+   "site": "cubic_global_careers"
+  }
+ },
+ {
+  "slug": "gsknch",
+  "name": "Haleon",
+  "platform": "workday",
+  "workday": {
+   "tenant": "gsknch",
+   "wd": "wd3",
+   "site": "GSKCareers"
+  }
+ },
+ {
+  "slug": "cadence",
+  "name": "Cadence",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cadence",
+   "wd": "wd1",
+   "site": "External_Careers"
+  }
+ },
+ {
+  "slug": "thales",
+  "name": "Thales",
+  "platform": "workday",
+  "workday": {
+   "tenant": "thales",
+   "wd": "wd3",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "zelis",
+  "name": "Zelis ",
+  "platform": "workday",
+  "workday": {
+   "tenant": "zelis",
+   "wd": "wd1",
+   "site": "ZelisCareers"
+  }
+ },
+ {
+  "slug": "sailpoint",
+  "name": "Sailpoint",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sailpoint",
+   "wd": "wd1",
+   "site": "SailPoint"
+  }
+ },
+ {
+  "slug": "draftkings",
+  "name": "DraftKings",
+  "platform": "workday",
+  "workday": {
+   "tenant": "draftkings",
+   "wd": "wd1",
+   "site": "DraftKings"
+  }
+ },
+ {
+  "slug": "vanderlande",
+  "name": "Vanderlande",
+  "platform": "workday",
+  "workday": {
+   "tenant": "vanderlande",
+   "wd": "wd3",
+   "site": "careers"
+  }
+ },
+ {
+  "slug": "pentair",
+  "name": "pentair",
+  "platform": "workday",
+  "workday": {
+   "tenant": "pentair",
+   "wd": "wd5",
+   "site": "Pentair_Careers"
+  }
+ },
+ {
+  "slug": "marvell",
+  "name": "Marvell",
+  "platform": "workday",
+  "workday": {
+   "tenant": "marvell",
+   "wd": "wd1",
+   "site": "MarvellCareers"
+  }
+ },
+ {
+  "slug": "nasdaq",
+  "name": "Nasdaq",
+  "platform": "workday",
+  "workday": {
+   "tenant": "nasdaq",
+   "wd": "wd1",
+   "site": "Global_External_Site"
+  }
+ },
+ {
+  "slug": "jda",
+  "name": "Blue Yonder",
+  "platform": "workday",
+  "workday": {
+   "tenant": "jda",
+   "wd": "wd5",
+   "site": "JDA_Careers"
+  }
+ },
+ {
+  "slug": "trellix",
+  "name": "Trellix",
+  "platform": "workday",
+  "workday": {
+   "tenant": "trellix",
+   "wd": "wd1",
+   "site": "EnterpriseCareers"
+  }
+ },
+ {
+  "slug": "morningstar",
+  "name": "Morning Star",
+  "platform": "workday",
+  "workday": {
+   "tenant": "morningstar",
+   "wd": "wd5",
+   "site": "Americas"
+  }
+ },
+ {
+  "slug": "nxp",
+  "name": "NXP",
+  "platform": "workday",
+  "workday": {
+   "tenant": "nxp",
+   "wd": "wd3",
+   "site": "careers"
+  }
+ },
+ {
+  "slug": "flexerasoftware",
+  "name": "Flexera Software",
+  "platform": "workday",
+  "workday": {
+   "tenant": "flexerasoftware",
+   "wd": "wd1",
+   "site": "FlexeraSoftware"
+  }
+ },
+ {
+  "slug": "cineplex",
+  "name": "Cineplex",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cineplex",
+   "wd": "wd3",
+   "site": "Cineplex"
+  }
+ },
+ {
+  "slug": "ebay",
+  "name": "eBay",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ebay",
+   "wd": "wd5",
+   "site": "apply"
+  }
+ },
+ {
+  "slug": "comscore",
+  "name": "Comscore, Inc.",
+  "platform": "workday",
+  "workday": {
+   "tenant": "comscore",
+   "wd": "wd5",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "razer",
+  "name": "Razer",
+  "platform": "workday",
+  "workday": {
+   "tenant": "razer",
+   "wd": "wd3",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "foxfactory",
+  "name": "Fox Factory",
+  "platform": "workday",
+  "workday": {
+   "tenant": "foxfactory",
+   "wd": "wd1",
+   "site": "FOX"
+  }
+ },
+ {
+  "slug": "alliance",
+  "name": "nissan",
+  "platform": "workday",
+  "workday": {
+   "tenant": "alliance",
+   "wd": "wd3",
+   "site": "nissanjobs"
+  }
+ },
+ {
+  "slug": "rocket",
+  "name": "Rocket",
+  "platform": "workday",
+  "workday": {
+   "tenant": "rocket",
+   "wd": "wd5",
+   "site": "rocket_careers"
+  }
+ },
+ {
+  "slug": "calix",
+  "name": "Calix",
+  "platform": "workday",
+  "workday": {
+   "tenant": "calix",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "trendmicro",
+  "name": "Trend Micro",
+  "platform": "workday",
+  "workday": {
+   "tenant": "trendmicro",
+   "wd": "wd3",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "travelhrportal",
+  "name": "Global Business Travel",
+  "platform": "workday",
+  "workday": {
+   "tenant": "travelhrportal",
+   "wd": "wd1",
+   "site": "Jobs"
+  }
+ },
+ {
+  "slug": "cmegroup",
+  "name": "CME Group",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cmegroup",
+   "wd": "wd1",
+   "site": "cme_careers"
+  }
+ },
+ {
+  "slug": "ashland",
+  "name": "Ashland",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ashland",
+   "wd": "wd12",
+   "site": "AshlandCareers1"
+  }
+ },
+ {
+  "slug": "mrisoftware",
+  "name": "MRI Software",
+  "platform": "workday",
+  "workday": {
+   "tenant": "mrisoftware",
+   "wd": "wd501",
+   "site": "External_CareerSite"
+  }
+ },
+ {
+  "slug": "rollsroyce",
+  "name": "Rolls-Royce",
+  "platform": "workday",
+  "workday": {
+   "tenant": "rollsroyce",
+   "wd": "wd3",
+   "site": "professional"
+  }
+ },
+ {
+  "slug": "sandvik",
+  "name": "Gibbs Cam",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sandvik",
+   "wd": "wd3",
+   "site": "gibbscam-jobs"
+  }
+ },
+ {
+  "slug": "saxobank",
+  "name": "Saxo Bank",
+  "platform": "workday",
+  "workday": {
+   "tenant": "saxobank",
+   "wd": "wd3",
+   "site": "CareeratSaxoBank"
+  }
+ },
+ {
+  "slug": "stibosystems",
+  "name": "Stibo Systems",
+  "platform": "workday",
+  "workday": {
+   "tenant": "stibosystems",
+   "wd": "wd3",
+   "site": "careers-at-stibo-systems"
+  }
+ },
+ {
+  "slug": "porch",
+  "name": "Porch Group",
+  "platform": "workday",
+  "workday": {
+   "tenant": "porch",
+   "wd": "wd1",
+   "site": "careers"
+  }
+ },
+ {
+  "slug": "gea",
+  "name": "GEA Group",
+  "platform": "workday",
+  "workday": {
+   "tenant": "gea",
+   "wd": "wd3",
+   "site": "GEACareers"
+  }
+ },
+ {
+  "slug": "simcorp",
+  "name": "Simcorp",
+  "platform": "workday",
+  "workday": {
+   "tenant": "simcorp",
+   "wd": "wd3",
+   "site": "SimCorp_Jobs"
+  }
+ },
+ {
+  "slug": "sprinklr",
+  "name": "Sprinkler",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sprinklr",
+   "wd": "wd1",
+   "site": "careers"
+  }
+ },
+ {
+  "slug": "arienscompany",
+  "name": "Ariens Company",
+  "platform": "workday",
+  "workday": {
+   "tenant": "arienscompany",
+   "wd": "wd5",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "hillenbrand",
+  "name": "DME Company",
+  "platform": "workday",
+  "workday": {
+   "tenant": "hillenbrand",
+   "wd": "wd3",
+   "site": "Global"
+  }
+ },
+ {
+  "slug": "mitel",
+  "name": "Mitel",
+  "platform": "workday",
+  "workday": {
+   "tenant": "mitel",
+   "wd": "wd3",
+   "site": "mitelcareers"
+  }
+ },
+ {
+  "slug": "mimecast",
+  "name": "Minecast",
+  "platform": "workday",
+  "workday": {
+   "tenant": "mimecast",
+   "wd": "wd5",
+   "site": "Mimecast-Careers"
+  }
+ },
+ {
+  "slug": "guardianlife",
+  "name": "Guardian",
+  "platform": "workday",
+  "workday": {
+   "tenant": "guardianlife",
+   "wd": "wd5",
+   "site": "Guardian-Life-Careers"
+  }
+ },
+ {
+  "slug": "cerence",
+  "name": "Cerence",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cerence",
+   "wd": "wd5",
+   "site": "Cerence"
+  }
+ },
+ {
+  "slug": "aptiv",
+  "name": "Aptive",
+  "platform": "workday",
+  "workday": {
+   "tenant": "aptiv",
+   "wd": "wd5",
+   "site": "APTIV_CAREERS"
+  }
+ },
+ {
+  "slug": "springernature",
+  "name": "Springer Group",
+  "platform": "workday",
+  "workday": {
+   "tenant": "springernature",
+   "wd": "wd3",
+   "site": "SpringerNatureCareers"
+  }
+ },
+ {
+  "slug": "ironmountain",
+  "name": "Iron Mountain",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ironmountain",
+   "wd": "wd5",
+   "site": "iron-mountain-jobs"
+  }
+ },
+ {
+  "slug": "wpi",
+  "name": "WPI",
+  "platform": "workday",
+  "workday": {
+   "tenant": "wpi",
+   "wd": "wd5",
+   "site": "WPI_External_Career_Site"
+  }
+ },
+ {
+  "slug": "russell",
+  "name": "Ruselle Investments",
+  "platform": "workday",
+  "workday": {
+   "tenant": "russell",
+   "wd": "wd5",
+   "site": "russellinvestments"
+  }
+ },
+ {
+  "slug": "csgi",
+  "name": "CGS Carrers",
+  "platform": "workday",
+  "workday": {
+   "tenant": "csgi",
+   "wd": "wd5",
+   "site": "CSGCareers"
+  }
+ },
+ {
+  "slug": "vertexinc",
+  "name": "Vertx Inc.",
+  "platform": "workday",
+  "workday": {
+   "tenant": "vertexinc",
+   "wd": "wd1",
+   "site": "VertexInc"
+  }
+ },
+ {
+  "slug": "telstra",
+  "name": "Telastra",
+  "platform": "workday",
+  "workday": {
+   "tenant": "telstra",
+   "wd": "wd3",
+   "site": "Telstra_Careers"
+  }
+ },
+ {
+  "slug": "sonyglobal",
+  "name": "Sony Global (Games)",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sonyglobal",
+   "wd": "wd1",
+   "site": "SonyGlobalCareers"
+  }
+ },
+ {
+  "slug": "toppanmerrill",
+  "name": "Toppan MErril",
+  "platform": "workday",
+  "workday": {
+   "tenant": "toppanmerrill",
+   "wd": "wd5",
+   "site": "Toppan_Merrill"
+  }
+ },
+ {
+  "slug": "shipt",
+  "name": "Shipt",
+  "platform": "workday",
+  "workday": {
+   "tenant": "shipt",
+   "wd": "wd1",
+   "site": "Shipt_External"
+  }
+ },
+ {
+  "slug": "lseg",
+  "name": "London stock Exchange",
+  "platform": "workday",
+  "workday": {
+   "tenant": "lseg",
+   "wd": "wd3",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "bb",
+  "name": "Black Bery",
+  "platform": "workday",
+  "workday": {
+   "tenant": "bb",
+   "wd": "wd3",
+   "site": "QNX"
+  }
+ },
+ {
+  "slug": "maersk",
+  "name": "Maersk",
+  "platform": "workday",
+  "workday": {
+   "tenant": "maersk",
+   "wd": "wd3",
+   "site": "Maersk_Careers"
+  }
+ },
+ {
+  "slug": "rakuten",
+  "name": "Rakuten",
+  "platform": "workday",
+  "workday": {
+   "tenant": "rakuten",
+   "wd": "wd1",
+   "site": "RakutenTV"
+  }
+ },
+ {
+  "slug": "olg",
+  "name": "Olg ",
+  "platform": "workday",
+  "workday": {
+   "tenant": "olg",
+   "wd": "wd3",
+   "site": "Careers"
+  }
  }
 ]

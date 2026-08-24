@@ -19,9 +19,15 @@ EveryRole — database-free live job board streaming career opportunities from c
 
 ## Structure
 
-- `src/app/` — routes and pages (`api/` holds server routes, e.g. `/api/jobs/[slug]`)
-- `src/components/` — UI components (job-browser, filters, command-menu, ui/)
-- `src/lib/` — data layer: ATS fetchers, caching, types, formatting
+- `src/app/` — routes and pages (`api/` holds server routes; `companies/[slug]` is a per-company view with tailored filters)
+- `src/components/` — UI (job-browser, company-picker, company-view, filters, ui/)
+- `src/lib/` — data layer: ATS fetchers, caching, types, formatting, platform capability map (`platforms.ts`)
+
+## Architecture / Performance
+
+- **Server-driven browse**: `/api/sites?q=` does instant company search over the ~8.5k registry; `/api/jobs` supports `q` (search), `platforms` (provider filter), and `page`/`perPage` (pagination) — the client never holds the whole registry or gigabytes of roles in memory.
+- Company pages seed page 1 server-side, then paginate progressively.
+- **Provider selector** (Sources chips) picks which job APIs are active; filters appear only when the source provides that field (see `platforms.ts`).
 
 ## Notes
 

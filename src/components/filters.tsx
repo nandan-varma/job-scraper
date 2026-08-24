@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Building2,
   Check,
   ChevronDown,
   Info,
@@ -10,21 +9,9 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -32,15 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  ALL_PROVIDERS,
   PLATFORM_META,
   pct,
   platformsProviding,
   type Coverage,
   type PlatformFacet,
 } from "@/lib/platforms";
+import { CompanyPicker } from "./company-picker";
 
 export type WorkModeFilter = "all" | "remote" | "hybrid" | "onsite";
 export type SortKey = "newest" | "company" | "title";
@@ -51,9 +45,9 @@ export interface Filters {
   workMode: WorkModeFilter;
   sort: SortKey;
   companies: Set<string>;
+  /** Enabled job-provider platforms (e.g. Greenhouse, Ashby). */
+  providers: Set<string>;
   departments: Set<string>;
-  /** API-specific filter — only meaningful once sources are loaded. */
-  platforms: Set<string>;
   salary: SalaryFilter;
 }
 
@@ -62,15 +56,14 @@ export const DEFAULT_FILTERS: Filters = {
   workMode: "all",
   sort: "newest",
   companies: new Set(),
+  providers: new Set(ALL_PROVIDERS),
   departments: new Set(),
-  platforms: new Set(),
   salary: "all",
 };
 
 interface Props {
   filters: Filters;
   onChange: (next: Filters) => void;
-  sites: Array<{ slug: string; name: string; platform: string }>;
   loadedSlugs: Set<string>;
   onToggleCompany: (slug: string) => void;
   departments: string[];
@@ -92,7 +85,7 @@ const SALARY_MODES: Array<{ value: SalaryFilter; label: string }> = [
   { value: "none", label: "No salary" },
 ];
 
-/** The fields shown in the cross-source "what data do they provide" matrix. */
+/** Fields shown in the cross-source "what data do they provide" matrix. */
 const MATRIX_FIELDS: Array<{
   key: "department" | "work_mode" | "salary" | "posted";
   label: string;
@@ -103,10 +96,13 @@ const MATRIX_FIELDS: Array<{
   { key: "posted", label: "Posted" },
 ];
 
+function allProvidersActive(filters: Filters): boolean {
+  return filters.providers.size === ALL_PROVIDERS.length;
+}
+
 export function FiltersBar({
   filters,
   onChange,
-  sites,
   loadedSlugs,
   onToggleCompany,
   departments,
@@ -114,7 +110,7 @@ export function FiltersBar({
   coverage,
   resultCount,
 }: Props) {
-  const [companyOpen, setCompanyOpen] = useState(false);
+  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
   const [coverageOpen, setCoverageOpen] = useState(false);
 
@@ -127,40 +123,31 @@ export function FiltersBar({
     patch({ departments: next });
   };
 
-  const togglePlatform = (key: string) => {
-    const next = new Set(filters.platforms);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    patch({ platforms: next });
+  const toggleProvider = (p: string) => {
+    const next = new Set(filters.providers);
+    if (next.has(p)) next.delete(p);
+    else next.add(p);
+    patch({ providers: next });
   };
 
-  const clearAdvanced = () =>
-    patch({
-      departments: new Set(),
-      platforms: new Set(),
-      salary: "all",
-    });
+  const clearAdvanced = () => patch({ departments: new Set(), salary: "all" });
 
   const clearAll = () => {
     onChange({ ...DEFAULT_FILTERS, query: filters.query });
   };
 
   const advancedActive =
-    filters.platforms.size +
-    filters.departments.size +
-    (filters.salary !== "all" ? 1 : 0);
+    filters.departments.size + (filters.salary !== "all" ? 1 : 0);
 
   const activeFilters =
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
     filters.departments.size > 0 ||
-    filters.platforms.size > 0 ||
     filters.salary !== "all";
 
   const deptCoverage = coverage.department;
   const salaryCoverage = coverage.salary;
   const deptPlatforms = platformsProviding(platforms, "department");
-  const salaryPlatforms = platformsProviding(platforms, "salary");
 
   return (
     <div className="space-y-3">
@@ -187,7 +174,6 @@ export function FiltersBar({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Work-mode segmented */}
           <div className="flex rounded-lg border bg-muted/40 p-0.5">
             {WORK_MODES.map((m) => (
               <button
@@ -205,8 +191,6 @@ export function FiltersBar({
               </button>
             ))}
           </div>
-
-          {/* Sort */}
           <Select
             value={filters.sort}
             onValueChange={(v) => patch({ sort: v as SortKey })}
@@ -229,62 +213,14 @@ export function FiltersBar({
 
       {/* Row 2: companies + more filters + data coverage + count */}
       <div className="flex flex-wrap items-center gap-2">
-        <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Building2 className="size-3.5" />
-              Companies
-              {filters.companies.size > 0 && (
-                <Badge className="ml-0.5 bg-primary text-primary-foreground">
-                  {filters.companies.size}
-                </Badge>
-              )}
-              <ChevronDown className="size-3 opacity-60" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search companies…" />
-              <CommandList>
-                <CommandEmpty>No companies found.</CommandEmpty>
-                <CommandGroup className="max-h-72 overflow-y-auto">
-                  {sites.map((s) => {
-                    const checked = filters.companies.has(s.slug);
-                    return (
-                      <CommandItem
-                        key={s.slug}
-                        value={`${s.name} ${s.slug}`}
-                        onSelect={() => onToggleCompany(s.slug)}
-                        className="flex items-center gap-2"
-                      >
-                        <span
-                          className={cn(
-                            "flex size-4 items-center justify-center rounded border transition-colors",
-                            checked
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-input",
-                          )}
-                        >
-                          {checked && <Check className="size-3" />}
-                        </span>
-                        <span className="flex-1 truncate text-sm">
-                          {s.name}
-                        </span>
-                        {!loadedSlugs.has(s.slug) && (
-                          <span className="text-[10px] text-muted-foreground">
-                            load
-                          </span>
-                        )}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <CompanyPicker
+          selected={filters.companies}
+          loaded={loadedSlugs}
+          providers={[...filters.providers]}
+          onToggle={onToggleCompany}
+          onOpenCompany={(slug) => router.push(`/companies/${slug}`)}
+        />
 
-        {/* More filters — data-derived filters live here, not in the default bar */}
         <Popover open={moreOpen} onOpenChange={setMoreOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 gap-1.5">
@@ -311,33 +247,7 @@ export function FiltersBar({
                 </button>
               )}
             </div>
-
             <div className="max-h-[26rem] overflow-y-auto p-2">
-              {/* Platform — every job has a source, always available */}
-              <FilterSection label="Platform">
-                {platforms.length === 0 ? (
-                  <Muted>
-                    No sources loaded yet. Pick companies or “Load all” first.
-                  </Muted>
-                ) : (
-                  <FacetList>
-                    {platforms.map((p) => {
-                      const checked = filters.platforms.has(p.key);
-                      return (
-                        <FacetRow
-                          key={p.key}
-                          checked={checked}
-                          onToggle={() => togglePlatform(p.key)}
-                          label={p.label}
-                          hint={`${p.count.toLocaleString()}`}
-                        />
-                      );
-                    })}
-                  </FacetList>
-                )}
-              </FilterSection>
-
-              {/* Department — source-dependent */}
               <FilterSection label="Department">
                 {platforms.length === 0 ? null : (
                   <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
@@ -366,13 +276,8 @@ export function FiltersBar({
                 )}
               </FilterSection>
 
-              {/* Salary — source-dependent */}
               {salaryCoverage.available > 0 && (
                 <FilterSection label="Salary">
-                  <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
-                    {salaryPlatforms} of {platforms.length} sources publish
-                    ranges · {pct(salaryCoverage)}% of roles
-                  </p>
                   <div className="flex rounded-lg border bg-muted/40 p-0.5">
                     {SALARY_MODES.map((m) => (
                       <button
@@ -396,7 +301,6 @@ export function FiltersBar({
           </PopoverContent>
         </Popover>
 
-        {/* Data coverage — explain which sources provide which fields */}
         <Popover open={coverageOpen} onOpenChange={setCoverageOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -413,7 +317,7 @@ export function FiltersBar({
             <p className="text-xs font-semibold">What each source provides</p>
             <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
               Not every ATS exposes every field. Filters only cover sources that
-              provide the data — e.g. department is missing from some feeds.
+              provide the data.
             </p>
             <div className="mt-3 space-y-1.5">
               {platforms.length === 0 ? (
@@ -456,6 +360,48 @@ export function FiltersBar({
         </span>
       </div>
 
+      {/* Row 3: job-provider selector + active chips */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          Sources
+        </span>
+        {ALL_PROVIDERS.map((p) => {
+          const meta = PLATFORM_META[p];
+          const active = filters.providers.has(p);
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => toggleProvider(p)}
+              title={`${meta?.label}: ${active ? "enabled" : "disabled"}`}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                active
+                  ? "border-primary/40 bg-primary/10 text-foreground"
+                  : "border-border bg-muted/40 text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  active ? "bg-primary" : "bg-muted-foreground/40",
+                )}
+              />
+              {meta?.label ?? p}
+            </button>
+          );
+        })}
+        {!allProvidersActive(filters) && (
+          <button
+            type="button"
+            onClick={() => patch({ providers: new Set(ALL_PROVIDERS) })}
+            className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+          >
+            Enable all
+          </button>
+        )}
+      </div>
+
       {/* Active filter chips */}
       {(activeFilters || filters.companies.size > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -464,22 +410,14 @@ export function FiltersBar({
               {filters.workMode}
             </Chip>
           )}
-          {[...filters.companies].map((slug) => {
-            const s = sites.find((x) => x.slug === slug);
-            return (
-              <Chip key={slug} onClear={() => onToggleCompany(slug)}>
-                {s?.name ?? slug}
-              </Chip>
-            );
-          })}
+          {[...filters.companies].map((slug) => (
+            <Chip key={slug} onClear={() => onToggleCompany(slug)}>
+              {slug}
+            </Chip>
+          ))}
           {[...filters.departments].map((d) => (
             <Chip key={d} onClear={() => toggleDepartment(d)}>
               {d}
-            </Chip>
-          ))}
-          {[...filters.platforms].map((key) => (
-            <Chip key={key} onClear={() => togglePlatform(key)}>
-              {PLATFORM_META[key]?.label ?? key}
             </Chip>
           ))}
           {filters.salary === "has" && (
