@@ -672,5 +672,225 @@ export const SITES: Site[] = [
   "slug": "zscaler",
   "name": "Zscaler",
   "platform": "greenhouse"
+ },
+ {
+  "slug": "adobe",
+  "name": "Adobe",
+  "platform": "workday",
+  "workday": {
+   "tenant": "adobe",
+   "wd": "wd5",
+   "site": "external_experienced"
+  }
+ },
+ {
+  "slug": "crowdstrike",
+  "name": "CrowdStrike",
+  "platform": "workday",
+  "workday": {
+   "tenant": "crowdstrike",
+   "wd": "wd5",
+   "site": "crowdstrikecareers"
+  }
+ },
+ {
+  "slug": "intel",
+  "name": "Intel",
+  "platform": "workday",
+  "workday": {
+   "tenant": "intel",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "mastercard",
+  "name": "Mastercard",
+  "platform": "workday",
+  "workday": {
+   "tenant": "mastercard",
+   "wd": "wd1",
+   "site": "CorporateCareers"
+  }
+ },
+ {
+  "slug": "paypal",
+  "name": "PayPal",
+  "platform": "workday",
+  "workday": {
+   "tenant": "paypal",
+   "wd": "wd1",
+   "site": "jobs"
+  }
+ },
+ {
+  "slug": "tmobile",
+  "name": "T-Mobile",
+  "platform": "workday",
+  "workday": {
+   "tenant": "tmobile",
+   "wd": "wd1",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "visa",
+  "name": "Visa",
+  "platform": "workday",
+  "workday": {
+   "tenant": "visa",
+   "wd": "wd5",
+   "site": "Visa"
+  }
+ },
+ {
+  "slug": "workday",
+  "name": "Workday",
+  "platform": "workday",
+  "workday": {
+   "tenant": "workday",
+   "wd": "wd5",
+   "site": "workday"
+  }
+ },
+ {
+  "slug": "zillow",
+  "name": "Zillow",
+  "platform": "workday",
+  "workday": {
+   "tenant": "zillow",
+   "wd": "wd5",
+   "site": "Zillow_Group_External"
+  }
+ },
+ {
+  "slug": "zoom",
+  "name": "Zoom",
+  "platform": "workday",
+  "workday": {
+   "tenant": "zoom",
+   "wd": "wd5",
+   "site": "Zoom"
+  }
+ },
+ {
+  "slug": "deliveryhero",
+  "name": "Delivery Hero",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "nielseniq",
+  "name": "NielsenIQ",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "xplor",
+  "name": "Xplor",
+  "platform": "smartrecruiters"
+ },
+ {
+  "slug": "toast",
+  "name": "Toast",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "braze",
+  "name": "Braze",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "dialpad",
+  "name": "Dialpad",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "faire",
+  "name": "Faire",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "carta",
+  "name": "Carta",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "classpass",
+  "name": "ClassPass",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "betterment",
+  "name": "Betterment",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "nextdoor",
+  "name": "Nextdoor",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "udemy",
+  "name": "Udemy",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "blend",
+  "name": "Blend",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "upwork",
+  "name": "Upwork",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "kickstarter",
+  "name": "Kickstarter",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "calm",
+  "name": "Calm",
+  "platform": "greenhouse"
+ },
+ {
+  "slug": "lovable",
+  "name": "Lovable",
+  "platform": "ashby"
+ },
+ {
+  "slug": "firecrawl",
+  "name": "Firecrawl",
+  "platform": "ashby"
+ },
+ {
+  "slug": "semgrep",
+  "name": "Semgrep",
+  "platform": "ashby"
+ },
+ {
+  "slug": "browserbase",
+  "name": "Browserbase",
+  "platform": "ashby"
+ },
+ {
+  "slug": "mem0",
+  "name": "Mem0",
+  "platform": "ashby"
+ },
+ {
+  "slug": "mux",
+  "name": "Mux",
+  "platform": "ashby"
+ },
+ {
+  "slug": "weaviate",
+  "name": "Weaviate",
+  "platform": "ashby"
+ },
+ {
+  "slug": "crypto",
+  "name": "crypto.com",
+  "platform": "lever"
  }
 ]
