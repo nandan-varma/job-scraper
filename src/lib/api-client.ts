@@ -35,7 +35,12 @@ function browseParams(
   if (f.providers.size && f.providers.size < ALL_PROVIDERS.length) {
     params.set("platforms", [...f.providers].join(","));
   }
-  if (f.departments.size) params.set("departments", [...f.departments].join(","));
+  if (f.departmentCategories.size) {
+    params.set("departmentCategories", [...f.departmentCategories].join(","));
+  }
+  if (f.employmentTypes.size) {
+    params.set("employmentTypes", [...f.employmentTypes].join(","));
+  }
   if (f.companies.size) params.set("companies", [...f.companies].join(","));
   params.set("sort", f.sort);
   params.set("page", String(page));

@@ -97,7 +97,8 @@ export function JobBrowser({ initialPage }: Props) {
     filters.region,
     filters.sort,
     [...filters.providers].sort().join(","),
-    [...filters.departments].sort().join(","),
+    [...filters.departmentCategories].sort().join(","),
+    [...filters.employmentTypes].sort().join(","),
     [...filters.companies].sort().join(","),
   ].join("|");
 
@@ -228,7 +229,8 @@ export function JobBrowser({ initialPage }: Props) {
     filters.query !== "" ||
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
-    filters.departments.size > 0 ||
+    filters.departmentCategories.size > 0 ||
+    filters.employmentTypes.size > 0 ||
     filters.salary !== "all" ||
     filters.region !== "all" ||
     filters.providers.size < platforms.length;

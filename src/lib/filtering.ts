@@ -28,7 +28,10 @@ export interface Filters {
   companies: Set<string>;
   /** Enabled job-provider platforms. */
   providers: Set<string>;
-  departments: Set<string>;
+  /** Categorized department buckets (Engineering/Sales/...), not raw ATS strings. */
+  departmentCategories: Set<string>;
+  /** Categorized employment types (full_time/contract/...), not raw ATS strings. */
+  employmentTypes: Set<string>;
   salary: SalaryFilter;
   region: RegionFilter;
 }
@@ -39,7 +42,8 @@ export const DEFAULT_FILTERS: Filters = {
   sort: "newest",
   companies: new Set(),
   providers: new Set(ALL_PROVIDERS),
-  departments: new Set(),
+  departmentCategories: new Set(),
+  employmentTypes: new Set(),
   salary: "all",
   region: "all",
 };

@@ -26,7 +26,8 @@ const CACHE_HEADER = "public, s-maxage=30, stale-while-revalidate=120";
  *   &salary=has|none
  *   &region=us|intl
  *   &platforms=ashby,lever  restrict to job-provider platform(s)
- *   &departments=Eng,Sales  restrict to department(s)
+ *   &departmentCategories=engineering,sales  categorized department bucket(s)
+ *   &employmentTypes=full_time,contract  categorized employment type(s)
  *   &companies=openai,vercel  optional narrowing filter (was previously required)
  *   &sort=newest|company|title
  *   &page=1&perPage=20
@@ -62,7 +63,8 @@ export async function GET(req: NextRequest) {
     salary: salary === "has" || salary === "none" ? salary : undefined,
     region: region === "us" || region === "intl" ? region : undefined,
     platforms: csv(p.get("platforms")),
-    departments: csv(p.get("departments")),
+    departmentCategories: csv(p.get("departmentCategories")),
+    employmentTypes: csv(p.get("employmentTypes")),
     // "sites" kept as an alias so the company page's existing calls
     // (?sites=slug) keep working against the same underlying filter.
     companies: csv(p.get("companies") ?? p.get("sites")),

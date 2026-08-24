@@ -3,6 +3,8 @@ import { db } from "./client";
 import { jobs } from "./schema";
 import { cached } from "./cache";
 import type { Job, WorkMode } from "@/lib/types";
+import { DEPARTMENT_CATEGORY_LABELS, type DepartmentCategory } from "@/lib/department-category";
+import { EMPLOYMENT_TYPE_LABELS, type EmploymentTypeCategory } from "@/lib/employment-type";
 
 const FACETS_TTL_MS = 30_000;
 
@@ -112,7 +114,12 @@ export interface BrowseFilters {
   salary?: "has" | "none";
   region?: "us" | "intl";
   platforms?: string[];
-  departments?: string[];
+  /** Categorized bucket (Engineering/Sales/...), not the raw per-ATS
+   * department string — see lib/department-category.ts. */
+  departmentCategories?: string[];
+  /** Canonicalized bucket (full_time/part_time/...), not the raw per-ATS
+   * string — see lib/employment-type.ts. */
+  employmentTypes?: string[];
   companies?: string[];
 }
 
@@ -150,8 +157,11 @@ function buildWhere(f: BrowseFilters, omit?: FilterKey): SQL {
   if (omit !== "platforms" && f.platforms?.length) {
     conds.push(inArray(jobs.platform, f.platforms));
   }
-  if (omit !== "departments" && f.departments?.length) {
-    conds.push(inArray(jobs.department, f.departments));
+  if (omit !== "departmentCategories" && f.departmentCategories?.length) {
+    conds.push(inArray(jobs.departmentCategory, f.departmentCategories));
+  }
+  if (omit !== "employmentTypes" && f.employmentTypes?.length) {
+    conds.push(inArray(jobs.employmentTypeCategory, f.employmentTypes));
   }
   return and(...conds)!;
 }
@@ -217,7 +227,10 @@ export interface FacetCounts {
   salary: { all: number; has: number; none: number };
   region: { all: number; us: number; intl: number };
   providers: Record<string, number>;
-  departments: Array<{ name: string; count: number }>;
+  /** Categorized department buckets — clean, ~14 fixed options with labels,
+   * not the 19k+ noisy raw per-ATS strings. */
+  departmentCategories: Array<{ id: DepartmentCategory; label: string; count: number }>;
+  employmentTypes: Array<{ id: EmploymentTypeCategory; label: string; count: number }>;
 }
 
 /** Per-dimension counts under every OTHER active filter — the "how many
@@ -231,7 +244,7 @@ export async function browseFacets(f: BrowseFilters): Promise<FacetCounts> {
 }
 
 async function computeBrowseFacets(f: BrowseFilters): Promise<FacetCounts> {
-  const [wmRows, salRows, regionRows, platRows, deptRows] = await Promise.all([
+  const [wmRows, salRows, regionRows, platRows, deptCatRows, empTypeRows] = await Promise.all([
     db
       .select({ v: jobs.workMode, n: sql<number>`count(*)` })
       .from(jobs)
@@ -256,12 +269,15 @@ async function computeBrowseFacets(f: BrowseFilters): Promise<FacetCounts> {
       .where(buildWhere(f, "platforms"))
       .groupBy(jobs.platform),
     db
-      .select({ v: jobs.department, n: sql<number>`count(*)` })
+      .select({ v: jobs.departmentCategory, n: sql<number>`count(*)` })
       .from(jobs)
-      .where(and(buildWhere(f, "departments"), isNotNull(jobs.department)))
-      .groupBy(jobs.department)
-      .orderBy(desc(sql`count(*)`))
-      .limit(40),
+      .where(and(buildWhere(f, "departmentCategories"), isNotNull(jobs.departmentCategory)))
+      .groupBy(jobs.departmentCategory),
+    db
+      .select({ v: jobs.employmentTypeCategory, n: sql<number>`count(*)` })
+      .from(jobs)
+      .where(and(buildWhere(f, "employmentTypes"), isNotNull(jobs.employmentTypeCategory)))
+      .groupBy(jobs.employmentTypeCategory),
   ]);
 
   const workMode = { all: 0, remote: 0, hybrid: 0, onsite: 0 };
@@ -281,11 +297,17 @@ async function computeBrowseFacets(f: BrowseFilters): Promise<FacetCounts> {
   }
   const providers: Record<string, number> = {};
   for (const r of platRows) providers[r.v] = r.n;
-  const departments = deptRows
-    .filter((r): r is { v: string; n: number } => !!r.v)
-    .map((r) => ({ name: r.v, count: r.n }));
 
-  return { workMode, salary, region, providers, departments };
+  const departmentCategories = deptCatRows
+    .filter((r): r is { v: DepartmentCategory; n: number } => !!r.v)
+    .map((r) => ({ id: r.v, label: DEPARTMENT_CATEGORY_LABELS[r.v], count: r.n }))
+    .sort((a, b) => b.count - a.count);
+  const employmentTypes = empTypeRows
+    .filter((r): r is { v: EmploymentTypeCategory; n: number } => !!r.v)
+    .map((r) => ({ id: r.v, label: EMPLOYMENT_TYPE_LABELS[r.v], count: r.n }))
+    .sort((a, b) => b.count - a.count);
+
+  return { workMode, salary, region, providers, departmentCategories, employmentTypes };
 }
 
 /** Per-platform counts under only the filters that survive a source-tab

@@ -31,6 +31,14 @@ export const jobs = sqliteTable(
 
     title: text("title").notNull(),
     department: text("department"),
+    /**
+     * Keyword-categorized from `department` at sync time (lib/department-
+     * category.ts) into a broad, filterable bucket — 8,502 companies each
+     * name teams differently, and the raw field is too noisy (19k+ distinct
+     * values, some literal internal codenames) to filter on directly.
+     * Advisory: null when nothing matches confidently, never forced.
+     */
+    departmentCategory: text("department_category"),
     /** Full Greenhouse-style department hierarchy, joined "Parent, Child". */
     departmentPath: text("department_path"),
     location: text("location"),
@@ -53,6 +61,10 @@ export const jobs = sqliteTable(
       .default("inferred"),
     /** Verbatim from the ATS (e.g. "FullTime", "Contract") — never reclassified. */
     employmentType: text("employment_type"),
+    /** Canonicalized from employmentType at sync time (lib/employment-type.ts)
+     * — formatting variants of the same fact ("FullTime"/"Full-time"/"Full
+     * Time") folded together, not a semantic guess. Null when unrecognized. */
+    employmentTypeCategory: text("employment_type_category"),
     requisitionId: text("requisition_id"),
 
     /** True "first listed" date when the platform distinguishes it from edits (YYYY-MM-DD). */
@@ -109,6 +121,12 @@ export const jobs = sqliteTable(
     index("jobs_region_idx").on(t.isUs).where(sql`${t.closedAt} is null`),
     index("jobs_department_idx")
       .on(t.department)
+      .where(sql`${t.closedAt} is null`),
+    index("jobs_dept_category_idx")
+      .on(t.departmentCategory)
+      .where(sql`${t.closedAt} is null`),
+    index("jobs_emp_type_category_idx")
+      .on(t.employmentTypeCategory)
       .where(sql`${t.closedAt} is null`),
   ],
 );

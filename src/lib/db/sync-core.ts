@@ -6,6 +6,8 @@ import type { FetchedJob, SyncStatus } from "./types";
 import { FETCHERS, FULL_SYNC_CAP } from "../fetchers";
 import { HttpError } from "../http";
 import { isUSLocation } from "../geo";
+import { categorizeDepartment } from "../department-category";
+import { categorizeEmploymentType } from "../employment-type";
 import type { Site } from "../types";
 
 /**
@@ -46,12 +48,14 @@ function toRow(
     sourceId: j.sourceId,
     title: j.title,
     department: j.department,
+    departmentCategory: categorizeDepartment(j.department),
     departmentPath: j.departmentPath,
     location: j.location,
     secondaryLocations: j.secondaryLocations ?? null,
     workMode: j.workMode,
     workModeSource: j.workModeSource,
     employmentType: j.employmentType,
+    employmentTypeCategory: categorizeEmploymentType(j.employmentType),
     requisitionId: j.requisitionId,
     postedDate: j.postedDate,
     updatedAtSource: j.updatedAtSource,
@@ -101,12 +105,14 @@ export async function upsertSiteJobs(
           company: sql`excluded.company`,
           title: sql`excluded.title`,
           department: sql`excluded.department`,
+          departmentCategory: sql`excluded.department_category`,
           departmentPath: sql`excluded.department_path`,
           location: sql`excluded.location`,
           secondaryLocations: sql`excluded.secondary_locations`,
           workMode: sql`excluded.work_mode`,
           workModeSource: sql`excluded.work_mode_source`,
           employmentType: sql`excluded.employment_type`,
+          employmentTypeCategory: sql`excluded.employment_type_category`,
           requisitionId: sql`excluded.requisition_id`,
           postedDate: sql`excluded.posted_date`,
           updatedAtSource: sql`excluded.updated_at_source`,

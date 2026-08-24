@@ -24,6 +24,8 @@ import {
 import type { FacetCounts } from "@/lib/db/queries";
 import { ALL_PROVIDERS, PLATFORM_META, type PlatformFacet } from "@/lib/platforms";
 import type { StarterPack } from "@/lib/featured";
+import { DEPARTMENT_CATEGORY_LABELS } from "@/lib/department-category";
+import { EMPLOYMENT_TYPE_LABELS } from "@/lib/employment-type";
 import { CompanyPicker } from "./company-picker";
 import {
   DropdownMenu,
@@ -77,6 +79,7 @@ export function FiltersBar({
 }: Props) {
   const router = useRouter();
   const [deptOpen, setDeptOpen] = useState(false);
+  const [empOpen, setEmpOpen] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
 
   const patch = (p: Partial<Filters>) => onChange({ ...filters, ...p });
@@ -96,14 +99,21 @@ export function FiltersBar({
       providers: tab === "all" ? new Set(ALL_PROVIDERS) : new Set([tab]),
       workMode: "all",
       salary: "all",
-      departments: new Set(),
+      departmentCategories: new Set(),
     });
 
-  const toggleDepartment = (d: string) => {
-    const next = new Set(filters.departments);
-    if (next.has(d)) next.delete(d);
-    else next.add(d);
-    patch({ departments: next });
+  const toggleDepartmentCategory = (id: string) => {
+    const next = new Set(filters.departmentCategories);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    patch({ departmentCategories: next });
+  };
+
+  const toggleEmploymentType = (id: string) => {
+    const next = new Set(filters.employmentTypes);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    patch({ employmentTypes: next });
   };
 
   const clearAll = () => onChange({ ...DEFAULT_FILTERS, query: filters.query });
@@ -112,7 +122,8 @@ export function FiltersBar({
     activeTab !== "all" ||
     filters.workMode !== "all" ||
     filters.companies.size > 0 ||
-    filters.departments.size > 0 ||
+    filters.departmentCategories.size > 0 ||
+    filters.employmentTypes.size > 0 ||
     filters.salary !== "all" ||
     filters.region !== "all";
 
@@ -246,26 +257,26 @@ export function FiltersBar({
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-1.5">
                 Department
-                {filters.departments.size > 0 && (
+                {filters.departmentCategories.size > 0 && (
                   <Badge className="bg-primary text-primary-foreground">
-                    {filters.departments.size}
+                    {filters.departmentCategories.size}
                   </Badge>
                 )}
                 <ChevronDown className="size-3 opacity-60" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-2" align="start">
-              {facets.departments.length === 0 ? (
-                <Muted>No departments in the loaded roles.</Muted>
+              {facets.departmentCategories.length === 0 ? (
+                <Muted>No categorized departments in the loaded roles.</Muted>
               ) : (
                 <div className="max-h-64 overflow-y-auto">
                   <FacetList>
-                    {facets.departments.map((d) => (
+                    {facets.departmentCategories.map((d) => (
                       <FacetRow
-                        key={d.name}
-                        checked={filters.departments.has(d.name)}
-                        onToggle={() => toggleDepartment(d.name)}
-                        label={d.name}
+                        key={d.id}
+                        checked={filters.departmentCategories.has(d.id)}
+                        onToggle={() => toggleDepartmentCategory(d.id)}
+                        label={d.label}
                         hint={d.count.toLocaleString()}
                       />
                     ))}
@@ -275,6 +286,37 @@ export function FiltersBar({
             </PopoverContent>
           </Popover>
         )}
+
+        <Popover open={empOpen} onOpenChange={setEmpOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              Employment type
+              {filters.employmentTypes.size > 0 && (
+                <Badge className="bg-primary text-primary-foreground">
+                  {filters.employmentTypes.size}
+                </Badge>
+              )}
+              <ChevronDown className="size-3 opacity-60" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2" align="start">
+            {facets.employmentTypes.length === 0 ? (
+              <Muted>No employment-type data in the loaded roles.</Muted>
+            ) : (
+              <FacetList>
+                {facets.employmentTypes.map((e) => (
+                  <FacetRow
+                    key={e.id}
+                    checked={filters.employmentTypes.has(e.id)}
+                    onToggle={() => toggleEmploymentType(e.id)}
+                    label={e.label}
+                    hint={e.count.toLocaleString()}
+                  />
+                ))}
+              </FacetList>
+            )}
+          </PopoverContent>
+        </Popover>
 
         <Popover open={dataOpen} onOpenChange={setDataOpen}>
           <PopoverTrigger asChild>
@@ -353,9 +395,14 @@ export function FiltersBar({
               {slug}
             </Chip>
           ))}
-          {[...filters.departments].map((d) => (
-            <Chip key={d} onClear={() => toggleDepartment(d)}>
-              {d}
+          {[...filters.departmentCategories].map((id) => (
+            <Chip key={id} onClear={() => toggleDepartmentCategory(id)}>
+              {DEPARTMENT_CATEGORY_LABELS[id as keyof typeof DEPARTMENT_CATEGORY_LABELS] ?? id}
+            </Chip>
+          ))}
+          {[...filters.employmentTypes].map((id) => (
+            <Chip key={id} onClear={() => toggleEmploymentType(id)}>
+              {EMPLOYMENT_TYPE_LABELS[id as keyof typeof EMPLOYMENT_TYPE_LABELS] ?? id}
             </Chip>
           ))}
           {filters.salary === "has" && (

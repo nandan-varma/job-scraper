@@ -22,6 +22,13 @@
       "when": 1787606658945,
       "tag": "0002_clear_network",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787608824297,
+      "tag": "0003_deep_blade",
+      "breakpoints": true
     }
   ]
 }
