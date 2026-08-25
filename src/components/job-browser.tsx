@@ -17,7 +17,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { parseAsArrayOf, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
+import {
+  parseAsArrayOf,
+  parseAsString,
+  parseAsStringEnum,
+  useQueryStates,
+} from "nuqs";
 import { toast } from "sonner";
 import type { Job } from "@/lib/types";
 import { STARTER_PACKS, type StarterPack } from "@/lib/featured";
@@ -260,22 +265,30 @@ export function JobBrowser({ initialPage }: Props) {
     [facets.providers],
   );
 
-  const toggleCompany = useCallback((slug: string) => {
-    setFilters((prev) => {
-      const next = new Set(prev.companies);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return { ...prev, companies: next };
-    });
-  }, [setFilters]);
+  const toggleCompany = useCallback(
+    (slug: string) => {
+      setFilters((prev) => {
+        const next = new Set(prev.companies);
+        if (next.has(slug)) next.delete(slug);
+        else next.add(slug);
+        return { ...prev, companies: next };
+      });
+    },
+    [setFilters],
+  );
 
-  const loadPack = useCallback((pack: StarterPack) => {
-    setFilters((prev) => ({
-      ...prev,
-      companies: new Set([...prev.companies, ...pack.slugs]),
-    }));
-    toast.success(`Filtering to ${pack.label} (${pack.slugs.length} companies)`);
-  }, [setFilters]);
+  const loadPack = useCallback(
+    (pack: StarterPack) => {
+      setFilters((prev) => ({
+        ...prev,
+        companies: new Set([...prev.companies, ...pack.slugs]),
+      }));
+      toast.success(
+        `Filtering to ${pack.label} (${pack.slugs.length} companies)`,
+      );
+    },
+    [setFilters],
+  );
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -292,7 +305,10 @@ export function JobBrowser({ initialPage }: Props) {
       .finally(() => setLoading(false));
   }, [filters, q]);
 
-  const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), [setFilters]);
+  const resetFilters = useCallback(
+    () => setFilters(DEFAULT_FILTERS),
+    [setFilters],
+  );
 
   const selected = useMemo(() => {
     const base = jobs.find((j) => j.id === selectedId) ?? null;
@@ -330,7 +346,11 @@ export function JobBrowser({ initialPage }: Props) {
 
   return (
     <div className="relative">
-      <CommandMenu onSelect={handleSelect} open={commandOpen} onOpenChange={setCommandOpen} />
+      <CommandMenu
+        onSelect={handleSelect}
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+      />
 
       {/* Toolbar */}
       <div
@@ -369,7 +389,9 @@ export function JobBrowser({ initialPage }: Props) {
                 disabled={loading}
                 aria-label="Refresh results"
               >
-                <RefreshCw className={loading ? "size-3.5 animate-spin" : "size-3.5"} />
+                <RefreshCw
+                  className={loading ? "size-3.5 animate-spin" : "size-3.5"}
+                />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
             </div>
@@ -411,7 +433,8 @@ export function JobBrowser({ initialPage }: Props) {
 
               <div className="pt-2">
                 <p className="mb-2 text-center text-xs text-muted-foreground">
-                  Showing {jobs.length.toLocaleString()} of {total.toLocaleString()} roles
+                  Showing {jobs.length.toLocaleString()} of{" "}
+                  {total.toLocaleString()} roles
                 </p>
                 {loadingMore && (
                   <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
@@ -420,7 +443,7 @@ export function JobBrowser({ initialPage }: Props) {
                 )}
                 {!hasMore && !loadingMore && (
                   <p className="pt-1 text-center text-xs text-muted-foreground">
-                    You’ve reached the end 🎉
+                    You’ve reached the end.
                   </p>
                 )}
                 {hasMore && !loadingMore && (
@@ -435,7 +458,9 @@ export function JobBrowser({ initialPage }: Props) {
                   </Button>
                 )}
               </div>
-              {hasMore && <div ref={sentinelRef} aria-hidden className="h-px" />}
+              {hasMore && (
+                <div ref={sentinelRef} aria-hidden className="h-px" />
+              )}
             </div>
           )}
         </div>
@@ -471,7 +496,9 @@ export function JobBrowser({ initialPage }: Props) {
           showCloseButton={false}
         >
           <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
-            <span className="text-sm font-medium text-muted-foreground">Job details</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Job details
+            </span>
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
@@ -496,7 +523,9 @@ function DetailPlaceholder({ count }: { count: number }) {
       <div className="text-muted-foreground">
         <Sparkles className="mx-auto size-8" />
       </div>
-      <p className="text-sm font-medium text-foreground">Select a role to view details</p>
+      <p className="text-sm font-medium text-foreground">
+        Select a role to view details
+      </p>
       <p className="max-w-xs text-xs text-muted-foreground">
         Click any of the {count.toLocaleString()} open roles to see the full
         description, apply link, and company info.

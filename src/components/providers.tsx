@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         {children}
-        <Toaster richColors position="top-center" />
+        <Toaster position="top-center" />
       </ThemeProvider>
     </NuqsAdapter>
   );

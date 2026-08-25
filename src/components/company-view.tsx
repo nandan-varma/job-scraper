@@ -389,7 +389,7 @@ export function CompanyView({
           {hasMore && <div ref={sentinelRef} aria-hidden className="h-px" />}
           {!hasMore && !loading && filtered.length > 0 && (
             <p className="py-2 text-center text-xs text-muted-foreground">
-              You’ve reached the end 🎉
+              You’ve reached the end.
             </p>
           )}
         </div>

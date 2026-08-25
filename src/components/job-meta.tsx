@@ -5,9 +5,9 @@ import { shortLocation, timeAgo, workModeLabel } from "@/lib/format";
 import { PLATFORM_META } from "@/lib/platforms";
 
 const WM_DOT: Record<string, string> = {
-  remote: "bg-emerald-500",
-  hybrid: "bg-amber-500",
-  onsite: "bg-sky-500",
+  remote: "bg-primary",
+  hybrid: "bg-primary/45",
+  onsite: "bg-muted-foreground/40",
 };
 
 /** Small colored chip naming the ATS/board this role came from. */

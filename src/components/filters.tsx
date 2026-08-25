@@ -22,7 +22,11 @@ import {
   type Filters,
 } from "@/lib/filtering";
 import type { FacetCounts } from "@/lib/db/queries";
-import { ALL_PROVIDERS, PLATFORM_META, type PlatformFacet } from "@/lib/platforms";
+import {
+  ALL_PROVIDERS,
+  PLATFORM_META,
+  type PlatformFacet,
+} from "@/lib/platforms";
 import type { StarterPack } from "@/lib/featured";
 import { DEPARTMENT_CATEGORY_LABELS } from "@/lib/department-category";
 import { EMPLOYMENT_TYPE_LABELS } from "@/lib/employment-type";
@@ -397,12 +401,16 @@ export function FiltersBar({
           ))}
           {[...filters.departmentCategories].map((id) => (
             <Chip key={id} onClear={() => toggleDepartmentCategory(id)}>
-              {DEPARTMENT_CATEGORY_LABELS[id as keyof typeof DEPARTMENT_CATEGORY_LABELS] ?? id}
+              {DEPARTMENT_CATEGORY_LABELS[
+                id as keyof typeof DEPARTMENT_CATEGORY_LABELS
+              ] ?? id}
             </Chip>
           ))}
           {[...filters.employmentTypes].map((id) => (
             <Chip key={id} onClear={() => toggleEmploymentType(id)}>
-              {EMPLOYMENT_TYPE_LABELS[id as keyof typeof EMPLOYMENT_TYPE_LABELS] ?? id}
+              {EMPLOYMENT_TYPE_LABELS[
+                id as keyof typeof EMPLOYMENT_TYPE_LABELS
+              ] ?? id}
             </Chip>
           ))}
           {filters.salary === "has" && (
@@ -563,16 +571,14 @@ function FieldMark({ on = false, label }: { on?: boolean; label: string }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 text-[10px]",
-        on
-          ? "text-emerald-600 dark:text-emerald-400"
-          : "text-muted-foreground/50",
+        on ? "text-primary" : "text-muted-foreground/50",
       )}
       title={label}
     >
       <span
         className={cn(
           "size-1.5 rounded-full",
-          on ? "bg-emerald-500" : "bg-muted-foreground/40",
+          on ? "bg-primary" : "bg-muted-foreground/40",
         )}
       />
       {label}

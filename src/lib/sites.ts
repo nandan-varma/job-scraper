@@ -7,6 +7,26 @@ export const SITES: Site[] = [
   "platform": "greenhouse"
  },
  {
+  "slug": "target",
+  "name": "Target",
+  "platform": "workday",
+  "workday": {
+   "tenant": "target",
+   "wd": "wd5",
+   "site": "targetcareers"
+  }
+ },
+ {
+  "slug": "samsung",
+  "name": "Samsung",
+  "platform": "workday",
+  "workday": {
+   "tenant": "sec",
+   "wd": "wd3",
+   "site": "Samsung_Careers"
+  }
+ },
+ {
   "slug": "anthropic",
   "name": "Anthropic",
   "platform": "greenhouse"

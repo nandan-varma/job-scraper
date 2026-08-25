@@ -16,7 +16,15 @@ import { timeAgo } from "@/lib/format";
 export const revalidate = 60;
 export const metadata = { title: "Sync status — EveryRole" };
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function StatCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
     <Card>
       <CardContent>
@@ -51,11 +59,10 @@ export default async function StatusPage() {
         Sync engine status
       </h1>
       <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-        Jobs are kept fresh by a scheduled background sync, not fetched live
-        per request. Each site is re-synced on its own cadence — popular
-        companies every ~45 min, the rest a few times a day — and a posting
-        is only ever removed once a completed sync confirms it&apos;s gone
-        from the source.
+        Jobs are kept fresh by a scheduled background sync, not fetched live per
+        request. Each site is re-synced on its own cadence — popular companies
+        every ~45 min, the rest a few times a day — and a posting is only ever
+        removed once a completed sync confirms it&apos;s gone from the source.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -95,9 +102,7 @@ export default async function StatusPage() {
                 Never synced
               </th>
               <th className="px-4 py-2.5 text-right font-medium">Failing</th>
-              <th className="px-4 py-2.5 text-right font-medium">
-                Open roles
-              </th>
+              <th className="px-4 py-2.5 text-right font-medium">Open roles</th>
               <th className="px-4 py-2.5 text-right font-medium">
                 Last synced
               </th>
@@ -121,7 +126,8 @@ export default async function StatusPage() {
                 <td
                   className={cn(
                     "px-4 py-2.5 text-right tabular-nums",
-                    p.failing > 0 && "font-medium text-amber-600 dark:text-amber-400",
+                    p.failing > 0 &&
+                      "font-medium text-amber-600 dark:text-amber-400",
                   )}
                 >
                   {p.failing || "—"}
@@ -143,7 +149,7 @@ export default async function StatusPage() {
       </h2>
       {failures.length === 0 ? (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-sm text-muted-foreground">
-          <CircleCheck className="size-4 text-emerald-500" />
+          <CircleCheck className="size-4 text-primary" />
           No failed sync attempts in the recent log.
         </div>
       ) : (

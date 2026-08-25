@@ -25,17 +25,17 @@ export function initials(name: string): string {
 }
 
 // Deterministic gradient pair per company so each logo is stable + distinct.
+// All tiles live in the sage/sand family of the design language (#88a8a4 on
+// off-white #F3F2ED) — ink text carries contrast, not saturated hue.
 const PALETTE: Array<[string, string]> = [
-  ["#6366f1", "#a855f7"], // indigo -> purple
-  ["#0ea5e9", "#6366f1"], // sky -> indigo
-  ["#8b5cf6", "#ec4899"], // violet -> pink
-  ["#10b981", "#0ea5e9"], // emerald -> sky
-  ["#f59e0b", "#ef4444"], // amber -> red
-  ["#14b8a6", "#6366f1"], // teal -> indigo
-  ["#3b82f6", "#06b6d4"], // blue -> cyan
-  ["#a855f7", "#f43f5e"], // purple -> rose
-  ["#84cc16", "#0ea5e9"], // lime -> sky
-  ["#f97316", "#8b5cf6"], // orange -> violet
+  ["#d3e0dc", "#a9c4be"], // sage mist
+  ["#e3e6df", "#c2d0ca"], // pale sage
+  ["#c5d8d3", "#88a8a4"], // sage -> brand
+  ["#b8cdc7", "#7d9c97"], // deep sage
+  ["#eee7da", "#d3cbba"], // warm sand
+  ["#dfe5de", "#b5c8c0"], // sage fog
+  ["#c9d4cf", "#94afa9"], // silver sage
+  ["#e8e6dd", "#ccc9ba"], // warm greige
 ];
 
 function hashStr(s: string): number {

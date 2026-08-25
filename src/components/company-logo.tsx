@@ -21,7 +21,7 @@ export function CompanyLogo({ name, className, size = "md" }: Props) {
     <div
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center font-bold text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10",
+        "flex shrink-0 items-center justify-center font-bold text-primary-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10",
         SIZES[size],
         className,
       )}

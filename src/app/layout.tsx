@@ -36,13 +36,13 @@ export default function RootLayout({
           <header className="sticky top-0 z-50 h-14 border-b bg-background/80 backdrop-blur-md">
             <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
               <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-sm">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                   <BriefcaseBusiness className="size-4" />
                 </span>
                 <span className="text-[15px] font-semibold tracking-tight">
                   EveryRole
                 </span>
-                <span className="ml-1 hidden rounded-full border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
+                <span className="ml-1 hidden rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary sm:inline">
                   Live
                 </span>
               </div>
@@ -63,7 +63,10 @@ export default function RootLayout({
               <p>
                 EveryRole · Synced continuously from Ashby, Greenhouse, Lever,
                 Workday, Apple, SmartRecruiters, Roblox &amp; HiringCafe.{" "}
-                <Link href="/status" className="underline hover:text-foreground">
+                <Link
+                  href="/status"
+                  className="underline hover:text-foreground"
+                >
                   Sync status
                 </Link>
               </p>
