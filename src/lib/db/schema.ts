@@ -128,6 +128,16 @@ export const jobs = sqliteTable(
     index("jobs_emp_type_category_idx")
       .on(t.employmentTypeCategory)
       .where(sql`${t.closedAt} is null`),
+    // workMode/compensationText power the facet-count GROUP BYs in
+    // computeBrowseFacets — without these, those two aggregates were full
+    // table scans on every uncached browse request (root cause of a Turso
+    // read-quota block: 226M rows read in one day off a ~200k-row table).
+    index("jobs_work_mode_idx")
+      .on(t.workMode)
+      .where(sql`${t.closedAt} is null`),
+    index("jobs_compensation_idx")
+      .on(t.compensationText)
+      .where(sql`${t.closedAt} is null`),
   ],
 );
 

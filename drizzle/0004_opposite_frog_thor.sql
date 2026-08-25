@@ -1,0 +1,2 @@
+CREATE INDEX `jobs_work_mode_idx` ON `jobs` (`work_mode`) WHERE "jobs"."closed_at" is null;--> statement-breakpoint
+CREATE INDEX `jobs_compensation_idx` ON `jobs` (`compensation_text`) WHERE "jobs"."closed_at" is null;

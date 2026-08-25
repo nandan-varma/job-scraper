@@ -6,7 +6,10 @@ import type { Job, WorkMode } from "@/lib/types";
 import { DEPARTMENT_CATEGORY_LABELS, type DepartmentCategory } from "@/lib/department-category";
 import { EMPLOYMENT_TYPE_LABELS, type EmploymentTypeCategory } from "@/lib/employment-type";
 
-const FACETS_TTL_MS = 30_000;
+// The sync engine only updates the DB every ~20 min (see page.tsx's ISR
+// revalidate=60 comment), so 60s of cache staleness here is invisible —
+// matches the same assumption already made for the homepage's ISR window.
+const FACETS_TTL_MS = 60_000;
 
 const listColumns = {
   siteSlug: jobs.siteSlug,

@@ -15,7 +15,13 @@ import { LRUCache } from "lru-cache";
  * for the same key while it's still computing share one Promise instead of
  * each triggering their own compute() (a stampede on cold cache/expiry).
  */
-const store = new LRUCache<string, Promise<unknown>>({ max: 300 });
+// Filters live in URL state (nuqs) now, so the key space is combinatorial
+// (search x workMode x salary x region x platforms x departments x
+// employmentTypes x companies x sort x page) rather than the handful of
+// states a client-side filter UI used to produce — 300 slots thrashed under
+// any real navigation/crawl traffic, evicting entries before they could be
+// reused and turning nearly every request into a fresh compute().
+const store = new LRUCache<string, Promise<unknown>>({ max: 5000 });
 
 export async function cached<T>(
   key: string,
