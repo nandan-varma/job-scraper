@@ -17,8 +17,6 @@ export interface PlatformMeta {
   };
 }
 
-export type ProvideKey = keyof PlatformMeta["provide"];
-
 /** Source of truth for "which API gives department/salary/etc." */
 export const PLATFORM_META: Record<string, PlatformMeta> = {
   ashby: {
@@ -118,19 +116,6 @@ export const PLATFORM_META: Record<string, PlatformMeta> = {
     },
   },
 };
-
-export const FIELD_LABELS: Record<ProvideKey, string> = {
-  location: "Location",
-  department: "Department",
-  work_mode: "Work mode",
-  salary: "Salary",
-  posted: "Posted",
-  description: "Description",
-};
-
-export function platformMeta(platform: string): PlatformMeta | undefined {
-  return PLATFORM_META[platform];
-}
 
 /** Every supported job-provider platform, in display order. */
 export const ALL_PROVIDERS = Object.keys(PLATFORM_META);

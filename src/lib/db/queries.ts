@@ -91,19 +91,6 @@ export async function jobDetail(
   return toJob(row, row.description);
 }
 
-/** Open-role count per company — cheap existence check without hydrating rows. */
-export async function openCountsBySite(
-  slugs: string[],
-): Promise<Map<string, number>> {
-  if (!slugs.length) return new Map();
-  const rows = await db
-    .select({ siteSlug: jobs.siteSlug, count: sql<number>`count(*)` })
-    .from(jobs)
-    .where(and(inArray(jobs.siteSlug, slugs), isNull(jobs.closedAt)))
-    .groupBy(jobs.siteSlug);
-  return new Map(rows.map((r) => [r.siteSlug, r.count]));
-}
-
 // --- server-driven browse: search/filter/facet/paginate the whole catalog ---
 
 export type SortKey = "newest" | "company" | "title";

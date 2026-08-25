@@ -66,15 +66,38 @@ export function toJob(site: Site, f: FetchedJob): Job {
   };
 }
 
-/** Normalize a date to YYYY-MM-DD or null. Rejects anything not already a real date
- * (relative strings like "Posted Today" are intentionally left null, not guessed at). */
+/** Epoch timestamps earlier than this (2000-01-01) can't be a real posting
+ * date in seconds or milliseconds — 123 as "epoch seconds" isn't a date,
+ * it's a garbage id, and must not become 1970-01-01. */
+const EPOCH_MS_FLOOR = 946_684_800_000;
+
+/** Normalize a date to YYYY-MM-DD or null. Rejects anything not a real date
+ * (relative strings like "Posted Today" are intentionally left null, not guessed at).
+ * Accepted forms: YYYY-MM-DD[-...] strings and epoch timestamps in seconds or
+ * milliseconds — Lever's postings API sends `createdAt` as epoch ms, and several
+ * other boards emit numeric timestamps, which the string path would silently
+ * discard (String(ms).slice(0,10) is not a date).
+ */
 export function isoDate(v: unknown): string | null {
   if (v === null || v === undefined) return null;
-  const s = String(v).slice(0, 10);
+  if (typeof v === "number") {
+    const ms = v >= 1e12 ? v : v * 1000; // seconds vs milliseconds
+    if (ms < EPOCH_MS_FLOOR) return null;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+  const raw = String(v).trim();
+  // Epoch as a bare digit string ("1711403416463" — 10 digits = seconds, 13 = ms).
+  if (/^\d{10,13}$/.test(raw)) {
+    const ms = raw.length <= 10 ? Number(raw) * 1000 : Number(raw);
+    if (ms < EPOCH_MS_FLOOR) return null;
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+  const s = raw.slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
   const d = new Date(s + "T00:00:00Z");
-  if (isNaN(d.getTime())) return null;
-  return s;
+  return isNaN(d.getTime()) ? null : s;
 }
 
 const NO_CAP = Infinity;
@@ -170,10 +193,20 @@ function workMode(metadata: unknown): WorkMode {
       }
     } else if (
       typeof v === "boolean" &&
-      _WORK_MODE_NAME.test(name) &&
+      // A boolean metadata row names the *condition*, not the value — so the
+      // name itself must denote a workplace-type fact before we trust it:
+      // "Remote? true" means telework, but "Onsite? true" means office work
+      // (the old blanket true→remote mapping inverted the latter).
+      /remote|hybrid|on-?site|in office|work from home|\bwfh\b|telecommute/i.test(
+        name,
+      ) &&
       !_WORK_MODE_EXCLUDE.test(name)
     ) {
-      return v ? "remote" : "onsite";
+      const ln = name.toLowerCase();
+      if (/remote|work from home|\bwfh\b|telecommute/.test(ln))
+        return v ? "remote" : "onsite";
+      if (/hybrid/.test(ln)) return v ? "hybrid" : "onsite";
+      if (/on-?site|in office/.test(ln)) return v ? "onsite" : "remote";
     }
   }
   return null;
@@ -211,7 +244,9 @@ function locName(v: unknown): string | null {
 }
 
 function deptPath(depts: Array<{ name?: string }> | undefined): string | null {
-  const names = (depts ?? []).map((d) => d.name).filter((n): n is string => !!n);
+  const names = (depts ?? [])
+    .map((d) => d.name)
+    .filter((n): n is string => !!n);
   return names.length ? names.join(", ") : null;
 }
 
@@ -359,9 +394,16 @@ export async function fetchWorkday(
   }
   const listed = cap === NO_CAP ? rows : rows.slice(0, cap);
 
-  const { results: details } = await pool(listed, 8, (p: WorkdayPosting) =>
-    getJson<WorkdayDetail>(`${base}${p.externalPath ?? ""}`),
+  const { results: details, fails } = await pool(
+    listed,
+    4,
+    (p: WorkdayPosting) =>
+      getJson<WorkdayDetail>(`${base}${p.externalPath ?? ""}`),
   );
+  if (fails)
+    console.warn(
+      `workday ${site.slug}: ${fails}/${listed.length} detail fetches failed — descriptions/dates for those rows stay null until a clean pass`,
+    );
 
   return listed.map((p, i) => {
     const detail = details[i] ?? {};
@@ -394,10 +436,7 @@ export async function fetchWorkday(
 
 // --- Apple -------------------------------------------------------------------
 
-export async function fetchApple(
-  site: Site,
-  cap = 50,
-): Promise<FetchedJob[]> {
+export async function fetchApple(_site: Site, cap = 50): Promise<FetchedJob[]> {
   const url = "https://jobs.apple.com/api/v1/search";
 
   async function page(n: number): Promise<{
@@ -431,8 +470,12 @@ export async function fetchApple(
     title?: string;
     team?: { teamName?: string; name?: string };
     teamName?: string;
-    location?: { fullLocation?: string; name?: string };
-    locationName?: string;
+    locations?: Array<{
+      city?: string;
+      stateProvince?: string;
+      countryName?: string;
+      name?: string;
+    }>;
     transformedPostingTitle?: string;
     postDateInGMT?: string;
     homeOffice?: boolean;
@@ -521,7 +564,17 @@ export async function fetchApple(
     const slug = r.transformedPostingTitle ?? "";
     const u = `https://jobs.apple.com/en-us/details/${jnum}${slug ? `/${slug}` : ""}`;
     const team = (r.team ?? {}) as { teamName?: string; name?: string };
-    const loc = (r.location ?? {}) as { fullLocation?: string; name?: string };
+    // Search results carry locations as an array of {city, stateProvince,
+    // countryName, name, level} objects (the flat location/locationName keys
+    // no longer exist on this endpoint). level-1 entries are country-only
+    // (city/state empty) — fall back to name.
+    const locs = r.locations ?? [];
+    const primary = locs[0];
+    const composite = primary
+      ? [primary.city, primary.stateProvince, primary.countryName]
+          .filter(Boolean)
+          .join(", ") || primary.name
+      : null;
     const parts = [
       jd?.description,
       jd?.minimumQualifications,
@@ -535,7 +588,7 @@ export async function fetchApple(
       sourceId: String(pid),
       title: r.postingTitle ?? r.title ?? "",
       department: team.teamName ?? team.name ?? r.teamName ?? null,
-      location: loc.fullLocation ?? loc.name ?? r.locationName ?? null,
+      location: composite,
       workMode: wm,
       workModeSource: wm ? "structured" : "inferred",
       employmentType: jd?.employmentType ?? null,
@@ -736,15 +789,21 @@ function parseHiringCafeDetail(page: string): HiringCafeParsed {
       page,
     );
   if (dm) {
-    const parts = decodeEntities(dm[1]).split(". ");
-    if (parts.length >= 2) {
-      const toks = parts[1].split(",").map((t) => t.trim());
-      if (
-        toks[0] &&
-        ["remote", "hybrid", "onsite"].includes(toks[0].toLowerCase())
-      )
-        out.work_mode = toks[0].toLowerCase();
-      if (toks.length >= 3 && !out.salary_text) out.salary_text = toks[2];
+    const meta = decodeEntities(dm[1]);
+    // The canonical HiringCafe summary is "… in <City>. <WorkMode>, <Type>,
+    // <pay>.…", but variants reorder or drop pieces — scan the whole text for
+    // the first standalone work-mode word and any salary range instead of
+    // assuming a fixed token position. Stays advisory ('inferred'): only used
+    // for the Remote/Hybrid/On-site chip, never to exclude.
+    if (!out.work_mode) {
+      const wm = /\b(remote|hybrid|on-?site)\b/i.exec(meta);
+      if (wm) out.work_mode = wm[1].toLowerCase().replace("-", "");
+    }
+    if (!out.salary_text) {
+      const salary = /\$\s?\d[\d,]*k?\s*[-–—~to]+\s*\$\s?\d[\d,]*k?/i.exec(
+        meta,
+      );
+      if (salary) out.salary_text = salary[0];
     }
   }
   return out;

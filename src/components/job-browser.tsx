@@ -8,22 +8,102 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { parseAsArrayOf, parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { toast } from "sonner";
 import type { Job } from "@/lib/types";
 import { STARTER_PACKS, type StarterPack } from "@/lib/featured";
 import { browseJobs, fetchJobDetail, type JobsPage } from "@/lib/api-client";
 import { dedupeJobs, normalizeQuery } from "@/lib/format";
-import { platformFacetsFromCounts } from "@/lib/platforms";
+import { ALL_PROVIDERS, platformFacetsFromCounts } from "@/lib/platforms";
 import { isLikelyUSVisitor } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { JobCard } from "./job-card";
 import { JobDetail } from "./job-detail";
 import { FiltersBar, DEFAULT_FILTERS, type Filters } from "./filters";
-import { PAGE_SIZE } from "@/lib/filtering";
+import {
+  PAGE_SIZE,
+  WORK_MODES,
+  SALARY_MODES,
+  REGION_MODES,
+  type WorkModeFilter,
+  type SalaryFilter,
+  type RegionFilter,
+  type SortKey,
+} from "@/lib/filtering";
 import { CommandMenu } from "./command-menu";
 import { EmptyState, JobListSkeleton } from "./states";
+
+/** Filters live in the URL (via nuqs) so a filtered view is shareable and
+ * survives back/forward — Sets aren't URL-serializable, so this is the array
+ * shape at the URL boundary; `toFilters`/`fromFilters` convert to/from the
+ * Set-based `Filters` the rest of the app already works with. */
+const filterParsers = {
+  q: parseAsString.withDefault(""),
+  workMode: parseAsStringEnum<WorkModeFilter>(
+    WORK_MODES.map((m) => m.value),
+  ).withDefault("all"),
+  sort: parseAsStringEnum<SortKey>(["newest", "company", "title"]).withDefault(
+    "newest",
+  ),
+  salary: parseAsStringEnum<SalaryFilter>(
+    SALARY_MODES.map((m) => m.value),
+  ).withDefault("all"),
+  region: parseAsStringEnum<RegionFilter>(
+    REGION_MODES.map((m) => m.value),
+  ).withDefault("all"),
+  companies: parseAsArrayOf(parseAsString).withDefault([]),
+  providers: parseAsArrayOf(parseAsString).withDefault(ALL_PROVIDERS),
+  dept: parseAsArrayOf(parseAsString).withDefault([]),
+  empType: parseAsArrayOf(parseAsString).withDefault([]),
+};
+
+function toFilters(v: {
+  q: string;
+  workMode: WorkModeFilter;
+  sort: SortKey;
+  salary: SalaryFilter;
+  region: RegionFilter;
+  companies: string[];
+  providers: string[];
+  dept: string[];
+  empType: string[];
+}): Filters {
+  return {
+    query: v.q,
+    workMode: v.workMode,
+    sort: v.sort,
+    salary: v.salary,
+    region: v.region,
+    companies: new Set(v.companies),
+    providers: new Set(v.providers),
+    departmentCategories: new Set(v.dept),
+    employmentTypes: new Set(v.empType),
+  };
+}
+
+function fromFilters(f: Filters) {
+  return {
+    q: f.query,
+    workMode: f.workMode,
+    sort: f.sort,
+    salary: f.salary,
+    region: f.region,
+    companies: [...f.companies],
+    providers: [...f.providers],
+    dept: [...f.departmentCategories],
+    empType: [...f.employmentTypes],
+  };
+}
 
 interface Props {
   /** First page of the whole catalog, fetched server-side for an instant paint. */
@@ -43,7 +123,20 @@ function useDebouncedValue<T>(value: T, ms: number): T {
 }
 
 export function JobBrowser({ initialPage }: Props) {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [urlFilters, setUrlFilters] = useQueryStates(filterParsers, {
+    history: "replace",
+  });
+  const filters = useMemo(() => toFilters(urlFilters), [urlFilters]);
+  const setFilters: Dispatch<SetStateAction<Filters>> = useCallback(
+    (value) => {
+      setUrlFilters((prevUrl) => {
+        const prev = toFilters(prevUrl);
+        const next = typeof value === "function" ? value(prev) : value;
+        return fromFilters(next);
+      });
+    },
+    [setUrlFilters],
+  );
   const [jobs, setJobs] = useState<Job[]>(initialPage.jobs);
   const [total, setTotal] = useState(initialPage.total);
   const [facets, setFacets] = useState(initialPage.facets!);
@@ -85,7 +178,7 @@ export function JobBrowser({ initialPage }: Props) {
       appliedRegionDefault.current = true;
       setFilters((prev) => ({ ...prev, region: "us" }));
     }
-  }, []);
+  }, [setFilters]);
 
   // Server-driven: any filter/search/sort change re-queries the whole
   // catalog from page 1. `companies` narrows the result set — it's no
@@ -174,7 +267,7 @@ export function JobBrowser({ initialPage }: Props) {
       else next.add(slug);
       return { ...prev, companies: next };
     });
-  }, []);
+  }, [setFilters]);
 
   const loadPack = useCallback((pack: StarterPack) => {
     setFilters((prev) => ({
@@ -182,7 +275,7 @@ export function JobBrowser({ initialPage }: Props) {
       companies: new Set([...prev.companies, ...pack.slugs]),
     }));
     toast.success(`Filtering to ${pack.label} (${pack.slugs.length} companies)`);
-  }, []);
+  }, [setFilters]);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -199,7 +292,7 @@ export function JobBrowser({ initialPage }: Props) {
       .finally(() => setLoading(false));
   }, [filters, q]);
 
-  const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), []);
+  const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), [setFilters]);
 
   const selected = useMemo(() => {
     const base = jobs.find((j) => j.id === selectedId) ?? null;
