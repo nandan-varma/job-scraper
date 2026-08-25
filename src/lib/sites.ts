@@ -27,6 +27,416 @@ export const SITES: Site[] = [
   }
  },
  {
+  "slug": "bankofamerica",
+  "name": "Bank of America",
+  "platform": "workday",
+  "workday": {
+   "tenant": "ghr",
+   "wd": "wd1",
+   "site": "lateral-us"
+  }
+ },
+ {
+  "slug": "citi",
+  "name": "Citi",
+  "platform": "workday",
+  "workday": {
+   "tenant": "citi",
+   "wd": "wd5",
+   "site": "2"
+  }
+ },
+ {
+  "slug": "att",
+  "name": "AT&T",
+  "platform": "workday",
+  "workday": {
+   "tenant": "att",
+   "wd": "wd1",
+   "site": "ATTGeneral"
+  }
+ },
+ {
+  "slug": "comcast",
+  "name": "Comcast",
+  "platform": "workday",
+  "workday": {
+   "tenant": "comcast",
+   "wd": "wd115",
+   "site": "Comcast_Careers"
+  }
+ },
+ {
+  "slug": "boeing",
+  "name": "Boeing",
+  "platform": "workday",
+  "workday": {
+   "tenant": "boeing",
+   "wd": "wd1",
+   "site": "EXTERNAL_CAREERS"
+  }
+ },
+ {
+  "slug": "nike",
+  "name": "Nike",
+  "platform": "workday",
+  "workday": {
+   "tenant": "nike",
+   "wd": "wd1",
+   "site": "nke"
+  }
+ },
+ {
+  "slug": "pfizer",
+  "name": "Pfizer",
+  "platform": "workday",
+  "workday": {
+   "tenant": "pfizer",
+   "wd": "wd1",
+   "site": "PfizerCareers"
+  }
+ },
+ {
+  "slug": "merck",
+  "name": "Merck",
+  "platform": "workday",
+  "workday": {
+   "tenant": "msd",
+   "wd": "wd5",
+   "site": "SearchJobs"
+  }
+ },
+ {
+  "slug": "homedepot",
+  "name": "The Home Depot",
+  "platform": "workday",
+  "workday": {
+   "tenant": "homedepot",
+   "wd": "wd5",
+   "site": "CareerDepot"
+  }
+ },
+ {
+  "slug": "hpe",
+  "name": "Hewlett Packard Enterprise",
+  "platform": "workday",
+  "workday": {
+   "tenant": "hpe",
+   "wd": "wd5",
+   "site": "Jobsathpe"
+  }
+ },
+ {
+  "slug": "paloaltonetworks",
+  "name": "Palo Alto Networks",
+  "platform": "workday",
+  "workday": {
+   "tenant": "paloaltonetworks",
+   "wd": "wd5",
+   "site": "panwexternalcareers"
+  }
+ },
+ {
+  "slug": "capitalone",
+  "name": "Capital One",
+  "platform": "workday",
+  "workday": {
+   "tenant": "capitalone",
+   "wd": "wd12",
+   "site": "Capital_One"
+  }
+ },
+ {
+  "slug": "statestreet",
+  "name": "State Street",
+  "platform": "workday",
+  "workday": {
+   "tenant": "statestreet",
+   "wd": "wd1",
+   "site": "Global"
+  }
+ },
+ {
+  "slug": "elevancehealth",
+  "name": "Elevance Health",
+  "platform": "workday",
+  "workday": {
+   "tenant": "elevancehealth",
+   "wd": "wd1",
+   "site": "ANT"
+  }
+ },
+ {
+  "slug": "cisco",
+  "name": "Cisco",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cisco",
+   "wd": "wd5",
+   "site": "Cisco_Careers"
+  }
+ },
+ {
+  "slug": "southwestairlines",
+  "name": "Southwest Airlines",
+  "platform": "workday",
+  "workday": {
+   "tenant": "swa",
+   "wd": "wd1",
+   "site": "external"
+  }
+ },
+ {
+  "slug": "pg",
+  "name": "Procter & Gamble",
+  "platform": "workday",
+  "workday": {
+   "tenant": "pg",
+   "wd": "wd5",
+   "site": "1000"
+  }
+ },
+ {
+  "slug": "cvshealth",
+  "name": "CVS Health",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cvshealth",
+   "wd": "wd1",
+   "site": "CVS_Health_Careers"
+  }
+ },
+ {
+  "slug": "lowes",
+  "name": "Lowe's",
+  "platform": "workday",
+  "workday": {
+   "tenant": "lowes",
+   "wd": "wd5",
+   "site": "LWS_External_CS"
+  }
+ },
+ {
+  "slug": "jpmorganchase",
+  "name": "JPMorgan Chase",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "jpmc.fa.oraclecloud.com",
+   "siteNumber": "CX_1001",
+   "sitePath": "CX_1001"
+  }
+ },
+ {
+  "slug": "oracle",
+  "name": "Oracle",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "eeho.fa.us2.oraclecloud.com",
+   "siteNumber": "CX_45001",
+   "sitePath": "jobsearch"
+  }
+ },
+ {
+  "slug": "dell",
+  "name": "Dell",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "enterpriseplatform.dell.com",
+   "siteNumber": "CX_1001",
+   "sitePath": "careers"
+  }
+ },
+ {
+  "slug": "honeywell",
+  "name": "Honeywell",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "ibqbjb.fa.ocs.oraclecloud.com",
+   "siteNumber": "CX_1",
+   "sitePath": "Honeywell"
+  }
+ },
+ {
+  "slug": "travelers",
+  "name": "Travelers",
+  "platform": "workday",
+  "workday": {
+   "tenant": "travelers",
+   "wd": "wd5",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "usaa",
+  "name": "USAA",
+  "platform": "workday",
+  "workday": {
+   "tenant": "usaa",
+   "wd": "wd1",
+   "site": "USAAJOBSWD"
+  }
+ },
+ {
+  "slug": "generalmills",
+  "name": "General Mills",
+  "platform": "workday",
+  "workday": {
+   "tenant": "genmills",
+   "wd": "wd1",
+   "site": "GMI_External_Careers"
+  }
+ },
+ {
+  "slug": "kroger",
+  "name": "Kroger",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "eluq.fa.us2.oraclecloud.com",
+   "siteNumber": "CX_2001",
+   "sitePath": "CX_2001"
+  }
+ },
+ {
+  "slug": "hilton",
+  "name": "Hilton",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "efet.fa.us2.oraclecloud.com",
+   "siteNumber": "CX_1",
+   "sitePath": "CX_1"
+  }
+ },
+ {
+  "slug": "barclays",
+  "name": "Barclays",
+  "platform": "workday",
+  "workday": {
+   "tenant": "barclays",
+   "wd": "wd3",
+   "site": "External_Career_Site_Barclays"
+  }
+ },
+ {
+  "slug": "cigna",
+  "name": "Cigna",
+  "platform": "workday",
+  "workday": {
+   "tenant": "cigna",
+   "wd": "wd5",
+   "site": "cignacareers"
+  }
+ },
+ {
+  "slug": "stryker",
+  "name": "Stryker",
+  "platform": "workday",
+  "workday": {
+   "tenant": "stryker",
+   "wd": "wd1",
+   "site": "StrykerCareers"
+  }
+ },
+ {
+  "slug": "bd",
+  "name": "BD",
+  "platform": "workday",
+  "workday": {
+   "tenant": "bdx",
+   "wd": "wd1",
+   "site": "EXTERNAL_CAREER_SITE_USA"
+  }
+ },
+ {
+  "slug": "abbott",
+  "name": "Abbott",
+  "platform": "workday",
+  "workday": {
+   "tenant": "abbott",
+   "wd": "wd5",
+   "site": "abbottcareers"
+  }
+ },
+ {
+  "slug": "gilead",
+  "name": "Gilead Sciences",
+  "platform": "workday",
+  "workday": {
+   "tenant": "gilead",
+   "wd": "wd1",
+   "site": "gileadcareers"
+  }
+ },
+ {
+  "slug": "amgen",
+  "name": "Amgen",
+  "platform": "workday",
+  "workday": {
+   "tenant": "amgen",
+   "wd": "wd1",
+   "site": "Careers"
+  }
+ },
+ {
+  "slug": "bristolmyerssquibb",
+  "name": "Bristol Myers Squibb",
+  "platform": "workday",
+  "workday": {
+   "tenant": "bristolmyerssquibb",
+   "wd": "wd5",
+   "site": "BMS"
+  }
+ },
+ {
+  "slug": "nordstrom",
+  "name": "Nordstrom",
+  "platform": "workday",
+  "workday": {
+   "tenant": "nordstrom",
+   "wd": "wd501",
+   "site": "nordstrom_careers"
+  }
+ },
+ {
+  "slug": "gap",
+  "name": "Gap Inc.",
+  "platform": "workday",
+  "workday": {
+   "tenant": "gapinc",
+   "wd": "wd1",
+   "site": "gapinc"
+  }
+ },
+ {
+  "slug": "molinahealthcare",
+  "name": "Molina Healthcare",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "hckd.fa.us2.oraclecloud.com",
+   "siteNumber": "CX_1",
+   "sitePath": "CX_1"
+  }
+ },
+ {
+  "slug": "tenethealthcare",
+  "name": "Tenet Healthcare",
+  "platform": "oraclecloud",
+  "oracleCloud": {
+   "host": "eodr.fa.us2.oraclecloud.com",
+   "siteNumber": "CX_1001",
+   "sitePath": "CX_1001"
+  }
+ },
+ {
+  "slug": "clorox",
+  "name": "Clorox",
+  "platform": "workday",
+  "workday": {
+   "tenant": "clorox",
+   "wd": "wd1",
+   "site": "Clorox"
+  }
+ },
+ {
   "slug": "anthropic",
   "name": "Anthropic",
   "platform": "greenhouse"

@@ -6,12 +6,26 @@ export interface WorkdayConfig {
   site: string;
 }
 
+export interface OracleCloudConfig {
+  /** Host serving the Candidate Experience UI + REST API — either a raw
+   * *.fa.<dc>.oraclecloud.com domain or a company's custom domain proxying
+   * the same Oracle Fusion Recruiting Cloud instance (e.g. Dell's
+   * enterpriseplatform.dell.com). */
+  host: string;
+  siteNumber: string;
+  /** Path segment after /hcmUI/CandidateExperience/en/sites/ in public job
+   * URLs — not always equal to siteNumber (e.g. Oracle itself uses
+   * "jobsearch", Dell uses "careers"). */
+  sitePath: string;
+}
+
 export interface Site {
   slug: string;
   name: string;
   platform: string;
   ashby_slug?: string;
   workday?: WorkdayConfig;
+  oracleCloud?: OracleCloudConfig;
   search_queries?: string[];
   status?: string;
   source_url?: string;

@@ -434,6 +434,88 @@ export async function fetchWorkday(
   });
 }
 
+// --- Oracle Cloud Recruiting (Fusion HCM "Candidate Experience") -------------
+
+interface OracleRequisition {
+  Id: string;
+  Title?: string;
+  PostedDate?: string;
+  PrimaryLocation?: string;
+  JobFamily?: string;
+  JobFunction?: string;
+  WorkplaceType?: string;
+  WorkplaceTypeCode?: string;
+  ShortDescriptionStr?: string;
+}
+
+/** WorkplaceTypeCode is an explicit ORA_REMOTE/ORA_HYBRID/ORA_ON_SITE enum
+ * when a company bothers to set it — structured, not guessed — but many
+ * requisitions leave it blank, so this is a positive-only signal. */
+function oracleCloudWorkMode(code: unknown): WorkMode {
+  const c = String(code ?? "").toUpperCase();
+  if (c.includes("REMOTE")) return "remote";
+  if (c.includes("HYBRID")) return "hybrid";
+  if (c.includes("ON_SITE") || c.includes("ONSITE")) return "onsite";
+  return null;
+}
+
+export async function fetchOracleCloud(
+  site: Site,
+  cap = 40,
+): Promise<FetchedJob[]> {
+  const { host, siteNumber, sitePath } = site.oracleCloud!;
+  const base = `https://${host}/hcmRestApi/resources/latest`;
+  const pageSize = 20;
+  const rows: OracleRequisition[] = [];
+  let offset = 0;
+  while (offset < cap) {
+    const resp = await getJson<{
+      items?: Array<{ requisitionList?: OracleRequisition[] }>;
+    }>(
+      `${base}/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations&finder=findReqs;siteNumber=${siteNumber},limit=${pageSize},offset=${offset},keyword=`,
+    );
+    const batch = resp.items?.[0]?.requisitionList ?? [];
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+    offset += pageSize;
+  }
+  const listed = cap === NO_CAP ? rows : rows.slice(0, cap);
+
+  const { results: details, fails } = await pool(
+    listed,
+    4,
+    (r: OracleRequisition) =>
+      getJson<{ items?: Array<{ ExternalDescriptionStr?: string }> }>(
+        `${base}/recruitingCEJobRequisitionDetails?expand=all&finder=ById;Id="${r.Id}",siteNumber=${siteNumber}`,
+      ),
+  );
+  if (fails)
+    console.warn(
+      `oraclecloud ${site.slug}: ${fails}/${listed.length} detail fetches failed — descriptions for those rows fall back to the short teaser`,
+    );
+
+  return listed.map((r, i) => {
+    const detail = details[i]?.items?.[0];
+    const publicUrl = `https://${host}/hcmUI/CandidateExperience/en/sites/${sitePath}/job/${r.Id}`;
+    const wm = oracleCloudWorkMode(r.WorkplaceTypeCode);
+    return makeFetchedJob({
+      sourceId: r.Id,
+      title: r.Title ?? "",
+      department: r.JobFamily ?? r.JobFunction ?? null,
+      location: r.PrimaryLocation ?? null,
+      workMode: wm,
+      workModeSource: wm ? "structured" : "inferred",
+      requisitionId: r.Id,
+      postedDate: isoDate(r.PostedDate),
+      url: publicUrl,
+      applyUrl: publicUrl,
+      description: htmlToText(
+        detail?.ExternalDescriptionStr ?? r.ShortDescriptionStr ?? "",
+      ),
+    });
+  });
+}
+
 // --- Apple -------------------------------------------------------------------
 
 export async function fetchApple(_site: Site, cap = 50): Promise<FetchedJob[]> {
@@ -872,6 +954,7 @@ export const FETCHERS: Record<string, Fetcher> = {
   greenhouse: fetchGreenhouse,
   lever: fetchLever,
   workday: fetchWorkday,
+  oraclecloud: fetchOracleCloud,
   apple: fetchApple,
   smartrecruiters: fetchSmartRecruiters,
   roblox: fetchRoblox,

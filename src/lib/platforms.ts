@@ -103,6 +103,18 @@ export const PLATFORM_META: Record<string, PlatformMeta> = {
       description: false,
     },
   },
+  oraclecloud: {
+    label: "Oracle Cloud",
+    tag: "border-primary/35 bg-primary/15 text-foreground/70 dark:border-primary/40 dark:bg-primary/15 dark:text-foreground/70",
+    provide: {
+      location: true,
+      department: true,
+      work_mode: true,
+      salary: false,
+      posted: true,
+      description: true,
+    },
+  },
   hiringcafe: {
     label: "HiringCafe",
     tag: "border-primary/35 bg-primary/15 text-foreground/70 dark:border-primary/40 dark:bg-primary/15 dark:text-foreground/70",
