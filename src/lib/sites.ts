@@ -437,6 +437,76 @@ export const SITES: Site[] = [
   }
  },
  {
+  "slug": "kohls",
+  "name": "Kohl's",
+  "platform": "workday",
+  "workday": {
+   "tenant": "kohls",
+   "wd": "wd504",
+   "site": "kohlscareers"
+  }
+ },
+ {
+  "slug": "vfcorp",
+  "name": "VF Corporation",
+  "platform": "workday",
+  "workday": {
+   "tenant": "vfc",
+   "wd": "wd5",
+   "site": "vfc_careers"
+  }
+ },
+ {
+  "slug": "tapestry",
+  "name": "Tapestry",
+  "platform": "workday",
+  "workday": {
+   "tenant": "tapestry",
+   "wd": "wd108",
+   "site": "Tapestry_Careers"
+  }
+ },
+ {
+  "slug": "kla",
+  "name": "KLA",
+  "platform": "workday",
+  "workday": {
+   "tenant": "kla",
+   "wd": "wd1",
+   "site": "Search"
+  }
+ },
+ {
+  "slug": "adient",
+  "name": "Adient",
+  "platform": "workday",
+  "workday": {
+   "tenant": "adient",
+   "wd": "wd3",
+   "site": "External"
+  }
+ },
+ {
+  "slug": "usbank",
+  "name": "U.S. Bank",
+  "platform": "workday",
+  "workday": {
+   "tenant": "usbank",
+   "wd": "wd1",
+   "site": "US_Bank_Careers"
+  }
+ },
+ {
+  "slug": "keybank",
+  "name": "KeyBank",
+  "platform": "workday",
+  "workday": {
+   "tenant": "keybank",
+   "wd": "wd5",
+   "site": "External_Career_Site"
+  }
+ },
+ {
   "slug": "anthropic",
   "name": "Anthropic",
   "platform": "greenhouse"
